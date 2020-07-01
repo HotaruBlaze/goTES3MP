@@ -19,6 +19,13 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("enable_ServerOutput", true)
 	viper.SetDefault("commandPrefix", "!")
+
+	viper.SetDefault("irc.server", "")
+	viper.SetDefault("irc.port", "")
+	viper.SetDefault("irc.nick", "")
+	viper.SetDefault("irc.channel", "")
+	viper.SetDefault("irc.pass", "")
+
 	// viper.SetDefault("enableCommands", true)
 	viper.SetDefault("discord.token", "")
 	viper.SetDefault("discord.serverChat", "")
