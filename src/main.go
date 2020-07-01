@@ -2,38 +2,107 @@ package main
 
 import (
 	"bufio"
-	"log"
+	"fmt"
+	"io"
+	"os"
 	"os/exec"
+	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
+// GitCommit used to build
+var GitCommit string
+
+// Build version
+var Build string
+
 // ServerRunning - TES3MP server Status
-var ServerRunning string = "false"
+var ServerRunning bool
 
-// CurrentPlayers on TES3MP
-var CurrentPlayers int = 0
+// CurrentPlayers on the server
+var CurrentPlayers int
 
-// MaxPlayers placeholder variable
-var MaxPlayers int = 0
+// MaxPlayers from .cfg file
+var MaxPlayers int
 
-// Version of goTES3MP
-const Version = "v0.0.1"
+// TES3MPVersion : Tes3mp Version
+var TES3MPVersion = ""
 
-var tes3mpLogMesage string = "[goTES3MP]: "
+// Players :  List is current Players Connected
+var Players = []string{}
+
+// TES3MPBuild : Linux/Windows (32-bit/64-Bit)
+var TES3MPBuild = ""
+
+var tes3mpLogMessage = "[goTES3MP]"
+
+// MultiWrite : Prints to logfile and os.Stdout
+var MultiWrite io.Writer
+
+// type StructWithCallbacks struct {
+// 	// callbacks.Callbacks
+// 	CallResult string
+// }
 
 func main() {
+	printBuildInfo()
+	initLogger()
+	// var Context StructWithCallbacks
 	LoadConfig()
+	enableDebug := viper.GetBool("debug")
+	if enableDebug {
+		log.Warnln("Debug mode is enabled")
+		log.SetLevel(log.DebugLevel)
+	}
 	go InitWebserver()
 	go UpdateStatusTimer()
 	go InitDiscord()
+	go InitIRC()
 	LaunchTes3mp()
+	// defer MultiWrite.Close()
+}
+
+func initLogger() {
+	dt := time.Now()
+	logDirectory := "./logs/"
+	logfileName := logDirectory + "goTES3MP-" + dt.Format("02-01-2006-15_04_05") + ".log"
+
+	if _, err := os.Stat(logDirectory); os.IsNotExist(err) {
+		os.MkdirAll(logDirectory, 0700)
+	}
+
+	logfile, err := os.OpenFile(logfileName, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	MultiWrite = io.MultiWriter(os.Stdout, logfile)
+	log.SetOutput(MultiWrite)
+	if viper.GetBool("debug") {
+		println("DEBUG IS ON")
+	}
+	log.SetLevel(log.InfoLevel)
+	if Build != "" && GitCommit != "" {
+		log.Infoln("goTES3MP", "Build:", Build+", "+"Commit:", GitCommit)
+	}
+}
+
+func printBuildInfo() {
+	fmt.Println("================================")
+	fmt.Println("goTES3MP")
+	fmt.Println("Build:", Build)
+	fmt.Println("Commit:", GitCommit)
+	fmt.Println("Github:", "https://github.com/hotarublaze/goTES3MP")
+	fmt.Println("================================")
 
 }
 
 // LaunchTes3mp : Start and initialize TES3MP
 func LaunchTes3mp() {
-	tes3mpPath := viper.GetString("tes3mpPath")
+	tes3mpPath := viper.GetString("tes3mp.basedir")
+
 	tes3mpBinary := "/tes3mp-server"
 
 	cmd := exec.Command(tes3mpPath + tes3mpBinary)
@@ -46,6 +115,6 @@ func LaunchTes3mp() {
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
 		m := outScanner.Text()
-		Linter(m)
+		go tes3mpOutputHandler(m)
 	}
 }

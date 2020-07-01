@@ -1,7 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -12,21 +14,27 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
 
-	viper.SetDefault("tes3mpPath", ".")
+	viper.SetDefault("tes3mp.baseDir", ".")
+	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("debug", false)
-	viper.SetDefault("enableCommands", true)
-	viper.SetDefault("discordToken", "")
-	viper.SetDefault("serverName", "")
+	viper.SetDefault("enable_ServerOutput", true)
+	viper.SetDefault("commandPrefix", "!")
+	// viper.SetDefault("enableCommands", true)
+	viper.SetDefault("discord.token", "")
+	viper.SetDefault("discord.serverChat", "")
+	viper.SetDefault("discord.staffRoles", []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			viper.WriteConfigAs(configPath)
-			fmt.Println(tes3mpLogMesage + "Created default config")
+			log.Infoln("[Viper]", "Created default config")
+			os.Exit(1)
 		} else {
-			panic(fmt.Errorf(tes3mpLogMesage+"Fatal error reading config file: %s \n", err))
+			log.Errorf("[Viper]", "Fatal error reading config file: %s \n", err)
+			panic(1)
 		}
 	}
-	fmt.Println(tes3mpLogMesage + "Successfully loaded config")
+	log.Println("[Viper]", "Successfully loaded config")
 
 	return ConfigLoaded
 }

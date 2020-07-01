@@ -11,8 +11,10 @@ import (
 
 // ServerStatus struct
 type ServerStatus struct {
-	ServerOnline   string
-	Version        string
+	ServerOnline   bool
+	TES3MPVersion  string
+	Build          string
+	Players        []string
 	CurrentPlayers int
 	MaxPlayers     int
 }
@@ -27,7 +29,7 @@ func UpdateStatusTimer() {
 
 }
 func getServerMaxPlayers() {
-	tes3mpPath := viper.GetString("tes3mpPath")
+	tes3mpPath := viper.GetString("tes3mp.basedir")
 
 	props, err := ReadPropertiesFile(tes3mpPath + "/tes3mp-server-default.cfg")
 	if err != nil {
@@ -39,10 +41,12 @@ func getServerMaxPlayers() {
 }
 
 // UpdateStatus for keeping server stats synced
-func UpdateStatus() (s string) {
+func UpdateStatus() (s []byte) {
 	CurrentStatus := ServerStatus{
 		ServerOnline:   ServerRunning,
-		Version:        Version,
+		TES3MPVersion:  TES3MPVersion,
+		Build:          Build,
+		Players:        Players,
 		CurrentPlayers: CurrentPlayers,
 		MaxPlayers:     MaxPlayers,
 	}
@@ -51,6 +55,7 @@ func UpdateStatus() (s string) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	return string(jsonData)
+	// println(string(jsonData))
+	// print(CurrentStatus)
+	return jsonData
 }
