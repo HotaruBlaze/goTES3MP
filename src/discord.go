@@ -108,6 +108,11 @@ func DiscordSendMessage(msg string) {
 	DiscordSession.ChannelMessageSend(serverChat, msg)
 
 }
+func DiscordSendAlert(msg string) {
+	alertChannel := viper.GetString("discord.alertsChannel")
+	DiscordSession.ChannelMessageSend(alertChannel, msg)
+
+}
 
 // UpdateDiscordStatus Update discord bot status to match player count on TES3MP
 func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
@@ -141,7 +146,7 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 
 		err := s.UpdateStatusComplex(usd)
 		if err != nil {
-			log.Errorln("UpdateDiscordStatus failed to update status.", err)
+			log.Warnln("UpdateDiscordStatus failed to update status.", err)
 		}
 	}
 }
