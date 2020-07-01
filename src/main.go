@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -14,6 +16,8 @@ import (
 
 // GitCommit used to build
 var GitCommit string
+
+var Stdin io.WriteCloser
 
 // Build version
 var Build string
@@ -106,12 +110,22 @@ func LaunchTes3mp() {
 	tes3mpBinary := "/tes3mp-server"
 
 	cmd := exec.Command(tes3mpPath + tes3mpBinary)
+
+	Stdin, _ = cmd.StdinPipe()
 	stdout, _ := cmd.StdoutPipe()
 
 	startErr := cmd.Start()
 	if startErr != nil {
 		log.Fatalf("cmd.Run() failed with '%s'\n", startErr)
 	}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Infoln("Recieved Signal to exit, Exiting and notifying discord")
+		Stdin.Write([]byte("\n"))
+	}()
+
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
 		m := outScanner.Text()
