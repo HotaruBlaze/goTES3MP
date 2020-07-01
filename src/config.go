@@ -28,6 +28,7 @@ func LoadConfig() (ConfigLoaded bool) {
 
 	// viper.SetDefault("enableCommands", true)
 	viper.SetDefault("discord.token", "")
+	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
 

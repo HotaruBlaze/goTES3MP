@@ -83,9 +83,14 @@ func tes3mpOutputHandler(s string) {
 	if isTrue {
 		log.Infoln(tes3mpLogMessage, "Tes3mp server is now online")
 		ServerRunning = true
+		statusMSG := "**" + "[TES3MP] Server is online. :yellow_heart:" + "**"
+		DiscordSendAlert(statusMSG)
 	}
-
-	// if debugToggle {
-	// 	fmt.Println(s)
-	// }
+	isTrue, _ = regexp.MatchString(`Called "OnServerExit"`, s)
+	if isTrue {
+		log.Infoln(tes3mpLogMessage, "Tes3mp server is now Offline")
+		ServerRunning = true
+		statusMSG := "**" + "[TES3MP] Server is offline. :warning:" + "**"
+		DiscordSendAlert(statusMSG)
+	}
 }
