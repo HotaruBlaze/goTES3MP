@@ -70,13 +70,13 @@ IrcBridge.RecvMessage = function()
                             tes3mp.SendMessage(
                                 pid,
                                 wherefrom .." ".. staffRole .." "..responce.user .. ": " .. responce.responce .. "\n",
-                                true
+                                false
                             )
 						else 
 							tes3mp.SendMessage(
                                 pid,
                                 wherefrom  .." "..responce.user .. ": " .. responce.responce .. "\n",
-                                true
+                                false
                             )
 						end
                     end
