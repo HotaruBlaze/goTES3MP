@@ -107,8 +107,13 @@ customEventHooks.registerValidator(
             method = "Chat",
             responce = message
         }
-        responce = cjson.encode(messageJson)
-        IrcBridge.SendMessage(responce)
+
+        if message:sub(1, 1) == "/" then
+		    return
+        else
+            responce = cjson.encode(messageJson)
+            IrcBridge.SendMessage(responce)
+        end
     end
 )
 
