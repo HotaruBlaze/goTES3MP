@@ -50,15 +50,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	// // If the message is "ping" reply with "Pong!"
-	// if m.Content == "ping" {
-	// 	s.ChannelMessageSend(m.ChannelID, "Pong!")
-	// }
 
-	// // If the message is "pong" reply with "Ping!"
-	// if m.Content == "pong" {
-	// 	s.ChannelMessageSend(m.ChannelID, "Ping!")
-	// }
 	if m.Content != "" && m.ChannelID == viper.GetString("discord.serverchat") {
 		roleIndex := -1
 		var HighestRole string
@@ -68,7 +60,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println("allowhexcolors = ", allowhexcolors)
 		userroles := getDiscordRoles(m.Author.ID, m.GuildID)
 		for role := range userroles {
-			i, found := Find(StaffRoles, role)
+			i, found := FindinArray(StaffRoles, role)
 			if found {
 				if i == 0 || roleIndex < i {
 					if viper.GetBool("debug") {
@@ -97,7 +89,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 			}
 		}
-		// fmt.Println("Fuck:", res)
 
 		relayProcess(res)
 	}
@@ -133,7 +124,7 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 		}
 
 		idleSince := 0
-		time.Sleep(5 * time.Second)
+		time.Sleep(20 * time.Second)
 		usd := discordgo.UpdateStatusData{
 			IdleSince: &idleSince,
 			Game: &discordgo.Game{

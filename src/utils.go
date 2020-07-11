@@ -75,7 +75,7 @@ func toHexInt(n *big.Int) string {
 	return fmt.Sprintf("%x", n) // or %X or upper case
 }
 
-func Find(slice []string, val string) (int, bool) {
+func FindinArray(slice []string, val string) (int, bool) {
 	for i, item := range slice {
 		if item == val {
 			return i, true

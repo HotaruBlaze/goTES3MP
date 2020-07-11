@@ -23,7 +23,7 @@ type ServerStatus struct {
 func UpdateStatusTimer() {
 	getServerMaxPlayers()
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(30 * time.Second)
 		_ = UpdateStatus()
 	}
 
@@ -55,7 +55,5 @@ func UpdateStatus() (s []byte) {
 	if err != nil {
 		log.Println(err)
 	}
-	// println(string(jsonData))
-	// print(CurrentStatus)
 	return jsonData
 }
