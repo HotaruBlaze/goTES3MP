@@ -29,6 +29,7 @@ func InitIRC() {
 	Irccon = irc.IRC(IrcNick, IrcNick)
 	Irccon.Debug = false
 	Irccon.UseTLS = false
+	Irccon.Password = password
 	Irccon.AddCallback("001", func(e *irc.Event) {
 		log.Infoln("[IRC] Connected to", IrcServer+":"+IrcPort, "as", IrcNick)
 		Irccon.Join(Systemchannel)
