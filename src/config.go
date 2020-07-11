@@ -12,25 +12,32 @@ func LoadConfig() (ConfigLoaded bool) {
 	var configPath = "./goTes3mp_config.json"
 	viper.SetConfigName("goTes3mp_config")
 	viper.SetConfigType("json")
+	viper.AddConfigPath("./goTES3MP")
 	viper.AddConfigPath(".")
 
+	viper.SetDefault("webserver.enable", false)
+
 	viper.SetDefault("tes3mp.baseDir", ".")
-	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("debug", false)
 	viper.SetDefault("enable_ServerOutput", true)
 	viper.SetDefault("commandPrefix", "!")
 
+	viper.SetDefault("irc.enable", false)
 	viper.SetDefault("irc.server", "")
 	viper.SetDefault("irc.port", "")
-	viper.SetDefault("irc.nick", "")
-	viper.SetDefault("irc.channel", "")
-	viper.SetDefault("irc.pass", "")
+	viper.SetDefault("irc.nick", "goTES3MP")
+	viper.SetDefault("irc.systemchannel", "#")
+	viper.SetDefault("irc.chatchannel", "#")
+	viper.SetDefault("irc.pass", "6667")
 
 	// viper.SetDefault("enableCommands", true)
+	viper.SetDefault("discord.enable", false)
+	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("discord.token", "")
 	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
+	viper.SetDefault("discord.userRoles", []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

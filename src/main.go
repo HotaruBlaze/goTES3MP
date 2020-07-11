@@ -45,36 +45,35 @@ var tes3mpLogMessage = "[goTES3MP]"
 // MultiWrite : Prints to logfile and os.Stdout
 var MultiWrite io.Writer
 
-// type StructWithCallbacks struct {
-// 	// callbacks.Callbacks
-// 	CallResult string
-// }
-
 func main() {
 	printBuildInfo()
 	initLogger()
-	// var Context StructWithCallbacks
 	LoadConfig()
 	enableDebug := viper.GetBool("debug")
 	if enableDebug {
 		log.Warnln("Debug mode is enabled")
 		log.SetLevel(log.DebugLevel)
 	}
-	go InitWebserver()
+	if viper.GetBool("webserver.enable") {
+		go InitWebserver()
+	}
 	go UpdateStatusTimer()
-	go InitDiscord()
-	go InitIRC()
+	if viper.GetBool("discord.enable") {
+		go InitDiscord()
+	}
+	if viper.GetBool("irc.enable") {
+		go InitIRC()
+	}
 	LaunchTes3mp()
-	// defer MultiWrite.Close()
 }
 
 func initLogger() {
 	dt := time.Now()
-	logDirectory := "./logs/"
-	logfileName := logDirectory + "goTES3MP-" + dt.Format("02-01-2006-15_04_05") + ".log"
+	ProgramDirectory := "./goTES3MP/logs/"
+	logfileName := ProgramDirectory + "goTES3MP-" + dt.Format("02-01-2006-15_04_05") + ".log"
 
-	if _, err := os.Stat(logDirectory); os.IsNotExist(err) {
-		os.MkdirAll(logDirectory, 0700)
+	if _, err := os.Stat(ProgramDirectory); os.IsNotExist(err) {
+		os.MkdirAll(ProgramDirectory, 0700)
 	}
 
 	logfile, err := os.OpenFile(logfileName, os.O_CREATE|os.O_WRONLY, 0644)
