@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -21,10 +22,10 @@ type jsonResponce struct {
 }
 
 func relayProcess(s []string) {
-	// sendMethod := s[0]
+	var systemChannel = viper.GetString("irc.systemchannel")
+	var chatChannel = viper.GetString("irc.chatchannel")
 	res := &jsonResponce{}
 	res.Method = s[0]
-	// fmt.Println("You:", s)
 	if viper.GetBool("debug") {
 		log.Println("Length of array sent to relayProcess is", len(s))
 	}
@@ -32,31 +33,51 @@ func relayProcess(s []string) {
 	case "Tes3mp-Command":
 		// onTes3mpCommand(s[3])
 	case "IRC":
-		log.Debugln("FROM IRC:", s[2])
-		results := gjson.GetMany(s[2], "user", "method", "pid", "responce")
+		log.Debugln("FROM IRC:", s)
+		ircChannel := s[1]
+		fmt.Println("ircChannel:", ircChannel)
+		// Json System Message
+		if ircChannel == systemChannel {
+			results := gjson.GetMany(s[3], "user", "method", "pid", "responce")
 
-		PlayerName := results[0].String()
-		Responce := results[3].String()
+			PlayerName := results[0].String()
+			Responce := results[3].String()
+			log.Debugln("sending Discord Message")
+			DiscordSendMessage(PlayerName + ": " + Responce)
 
-		// Send Message to discord
-		DiscordSendMessage(PlayerName + ": " + Responce)
+			ircResponce := "[TES3MP]" + " " + PlayerName + ": " + Responce
+			log.Debugln("sending to IRC-Chat Channel")
+			fmt.Println("sending Chat Message")
+
+			IRCSendMessage(chatChannel, ircResponce)
+		}
+		// From dedicated IRC Chat
+		if ircChannel == chatChannel {
+			res := &jsonResponce{}
+			res.Method = "IRC"
+			res.User = s[2]
+			res.Pid = -1
+			res.Responce = string(strings.Join(s[3:], " "))
+			jsonResponce, err := json.Marshal(res)
+			if err != nil {
+				log.Errorln("[Relay]", "Failed to create JSON for chatChannel, ", err)
+			}
+			sendResponce := bytes.NewBuffer(jsonResponce).String()
+			IRCSendMessage(systemChannel, sendResponce)
+			DiscordSendMessage("[IRC] " + res.User + ": " + res.Responce)
+		}
 
 	case "Discord":
 		res := &jsonResponce{}
 		res.Method = "Discord"
 		res.User = s[1]
 		res.Pid = -1
-		// res.Role = ""
-		// res.RoleColor = ""
+
 		res.Responce = s[3]
-		fmt.Println("0:", s[0])
-		fmt.Println("1:", s[1])
-		fmt.Println("2:", s[2])
-		fmt.Println("3:", s[3])
-		// fmt.Println("4:", s[4])
-		// fmt.Println("0:", s[0])
 		log.Debugln("[Relay][Discord]", s)
 
+		// This does not work correctly if u have multiple valid roles
+		// Not really sure how to fix this at this time.
 		if len(s) > 4 {
 			if s[4] != "" && s[5] != "" {
 				res.Role = s[4]
@@ -69,7 +90,11 @@ func relayProcess(s []string) {
 		}
 
 		sendResponce := bytes.NewBuffer(jsonResponce).String()
-		IRCSendMessage(sendResponce)
+		IRCSendMessage(systemChannel, sendResponce)
+
+		ircResponce := "[Discord] " + res.User + ": " + res.Responce
+		IRCSendMessage(chatChannel, ircResponce)
+
 	default:
 		log.Error(tes3mpLogMessage, `Something tried to use method "`+res.Method+`" but has no handler registered`)
 	}

@@ -11,7 +11,7 @@ local cjson = require("cjson")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v3.0.0-goTES3MP"
+IrcBridge.version = "v3.0.1-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 
 IrcBridge.defaultConfig = {
@@ -19,9 +19,10 @@ IrcBridge.defaultConfig = {
     server = "",
     port = "6667",
     nspasswd = "",
-    channel = "#",
+    systemchannel = "#",
     nickfilter = "",
-    usrColor = "#7289da"
+    discordColor = "#825eed",
+    ircColor = "#5D9BEE"
 }
 
 IrcBridge.config = DataManager.loadConfiguration(IrcBridge.scriptName, IrcBridge.defaultConfig)
@@ -31,10 +32,10 @@ if (IrcBridge.config == IrcBridge.defaultConfig) then
     tes3mp.StopServer(0)
 end
 
-if (IrcBridge.config.nick == "" or IrcBridge.config.server == "" or IrcBridge.config.channel == "#") then
+if (IrcBridge.config.nick == "" or IrcBridge.config.systemchannel == "" or IrcBridge.config.systemchannel == "#") then
     tes3mp.LogMessage(
         enumerations.log.ERROR,
-        "IrcBridge has not been configured correctly." .. "\n" .. "nick, server and channel are required."
+        "IrcBridge has not been configured correctly." .. "\n" .. "nick, server, and systemchannel are required."
     )
     tes3mp.StopServer(0)
 end
@@ -42,9 +43,10 @@ end
 local nick = IrcBridge.config.nick
 local server = IrcBridge.config.server
 local nspasswd = IrcBridge.config.nspasswd
-local channel = IrcBridge.config.channel
+local systemchannel = IrcBridge.config.systemchannel
 local nickfilter = IrcBridge.config.nickfilter
-local usrColor = IrcBridge.config.usrColor
+local discordColor = IrcBridge.config.discordColor
+local ircColor = IrcBridge.config.ircColor
 local port = IrcBridge.config.port
 IRCTimerId = nil
 
@@ -52,19 +54,26 @@ local s = irc.new {nick = nick}
 s:connect(server, port)
 nspasswd = "identify " .. nspasswd
 s:sendChat("NickServ", nspasswd)
-s:join(channel)
+s:join(systemchannel)
 local lastMessage = ""
 
 IrcBridge.RecvMessage = function()
     s:hook(
         "OnChat",
-        function(user, channel, message)
+        function(user, systemchannel, message)
             if message ~= lastMessage and tableHelper.getCount(Players) > 0 then
                 local responce = cjson.decode(message)
-                print("TES3MP: ", message)
                 for pid, player in pairs(Players) do
                     if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
-                        local wherefrom = usrColor .. "[Discord]" .. color.Default
+                        local wherefrom = ""
+                        if responce.method == "Discord" then
+                            wherefrom = discordColor .. "[" .. responce.method .. "]" .. color.Default
+                        elseif responce.method == "IRC" then
+                            wherefrom = ircColor .. "[" .. responce.method .. "]" .. color.Default
+                        else 
+                            wherefrom = color.Default .. "[" .. responce.method .. "]" .. color.Default
+                        end
+
                         if responce.role ~= "" and responce.role_color ~= "" then
                             local staffRole = "#"..responce.role_color .. "[" .. responce.role .. "]" .. color.Default
                             tes3mp.SendMessage(
@@ -90,7 +99,7 @@ IrcBridge.RecvMessage = function()
 end
 
 IrcBridge.SendMessage = function(message)
-    s:sendChat(channel, message)
+    s:sendChat(systemchannel, message)
 end
 
 function OnIRCUpdate()
