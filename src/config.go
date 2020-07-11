@@ -24,11 +24,11 @@ func LoadConfig() (ConfigLoaded bool) {
 
 	viper.SetDefault("irc.enable", false)
 	viper.SetDefault("irc.server", "")
-	viper.SetDefault("irc.port", "")
+	viper.SetDefault("irc.port", "6667")
 	viper.SetDefault("irc.nick", "goTES3MP")
 	viper.SetDefault("irc.systemchannel", "#")
 	viper.SetDefault("irc.chatchannel", "#")
-	viper.SetDefault("irc.pass", "6667")
+	viper.SetDefault("irc.pass", "")
 
 	// viper.SetDefault("enableCommands", true)
 	viper.SetDefault("discord.enable", false)

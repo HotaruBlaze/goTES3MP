@@ -18,6 +18,7 @@ IrcBridge.defaultConfig = {
     nick = "",
     server = "",
     port = "6667",
+    password = "",
     nspasswd = "",
     systemchannel = "#",
     nickfilter = "",
@@ -43,6 +44,7 @@ end
 local nick = IrcBridge.config.nick
 local server = IrcBridge.config.server
 local nspasswd = IrcBridge.config.nspasswd
+local password = IrcBridge.config.password
 local systemchannel = IrcBridge.config.systemchannel
 local nickfilter = IrcBridge.config.nickfilter
 local discordColor = IrcBridge.config.discordColor
@@ -51,7 +53,17 @@ local port = IrcBridge.config.port
 IRCTimerId = nil
 
 local s = irc.new {nick = nick}
-s:connect(server, port)
+if password ~= "" then
+    s:connect({
+        host = server,
+        port = port,
+        password = password,
+        timeout = 120,
+        secure = false
+    })
+else
+    s:connect(server, port)
+end
 nspasswd = "identify " .. nspasswd
 s:sendChat("NickServ", nspasswd)
 s:join(systemchannel)
