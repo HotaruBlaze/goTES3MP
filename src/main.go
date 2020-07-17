@@ -143,11 +143,14 @@ func LaunchTes3mp() {
 }
 func queueProcessor() {
 	for {
-		for len(Queue) > 0 {
-			var x string
-			x, Queue = Queue[len(Queue)-1], Queue[:len(Queue)-1]
-			tes3mpOutputHandler(x)
+		if len(Queue) > 0 {
+			for len(Queue) > 0 {
+				var x string
+				x, Queue = Queue[len(Queue)-1], Queue[:len(Queue)-1]
+				tes3mpOutputHandler(x)
+			}
+		} else {
+			time.Sleep(10 * time.Millisecond)
 		}
-
 	}
 }
