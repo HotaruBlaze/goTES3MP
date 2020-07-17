@@ -19,7 +19,7 @@ func LoadConfig() (ConfigLoaded bool) {
 
 	viper.SetDefault("tes3mp.baseDir", ".")
 	viper.SetDefault("debug", false)
-	viper.SetDefault("ServerOutput", true)
+	viper.SetDefault("serveroutput", true)
 	viper.SetDefault("commandPrefix", "!")
 
 	viper.SetDefault("printMemoryInfo", false)
