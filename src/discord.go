@@ -27,6 +27,7 @@ func InitDiscord() {
 		log.Errorln("error creating Discord session,", err)
 		return
 	}
+	defer InitDiscord()
 	DiscordSession = Discord
 
 	Discord.AddHandler(messageCreate)
