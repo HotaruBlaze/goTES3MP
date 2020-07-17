@@ -32,7 +32,6 @@ func relayProcess(s []string) {
 	case "Tes3mp-Command":
 		// onTes3mpCommand(s[3])
 	case "IRC":
-		log.Debugln("FROM IRC:", s)
 		ircChannel := s[1]
 		// Json System Message
 		if ircChannel == systemChannel {
