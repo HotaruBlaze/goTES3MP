@@ -62,7 +62,8 @@ func tes3mpOutputHandler(s string) {
 				Players = RemoveEntryFromArray(Players, player.Name)
 				DiscordSendMessage("[TES3MP] " + player.Name + " left the server")
 			} else {
-				DiscordSendMessage("[TES3MP] " + player.Name + " left the server, But we never got their connected")
+				DiscordSendMessage("[TES3MP] " + player.Name + " left the server")
+				log.Println(tes3mpLogMessage, player.Name, "left the server, but we never got their connected")
 			}
 		}
 	}
