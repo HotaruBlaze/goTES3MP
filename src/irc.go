@@ -42,13 +42,10 @@ func InitIRC() {
 			if event.Arguments[0] == Systemchannel {
 				res := []string{"IRC", event.Arguments[0], event.Nick, event.Message()}
 				relayProcess(res)
-				fmt.Println("This is a System Message")
 			}
 			if event.Arguments[0] == Chatchannel {
 				res := []string{"IRC", event.Arguments[0], event.Nick, event.Message()}
 				relayProcess(res)
-				fmt.Println("This is a Chat Message")
-
 			}
 		}(event)
 	})
