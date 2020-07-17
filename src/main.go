@@ -138,7 +138,7 @@ func LaunchTes3mp() {
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
 		m := outScanner.Text()
-		Queue = AppendIfMissing(Queue, m)
+		Queue = append(Queue, m)
 	}
 }
 func queueProcessor() {
