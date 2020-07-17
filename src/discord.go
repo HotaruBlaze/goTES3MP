@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	big "math/big"
 	"os"
 	"os/signal"
@@ -58,7 +57,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		var res []string
 		var DiscordName string
 		allowhexcolors := viper.GetBool("discord.allowcolorhexusage")
-		fmt.Println("allowhexcolors = ", allowhexcolors)
 		userroles := getDiscordRoles(m.Author.ID, m.GuildID)
 		for role := range userroles {
 			i, found := FindinArray(StaffRoles, role)
