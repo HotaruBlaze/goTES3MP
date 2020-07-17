@@ -70,6 +70,7 @@ func main() {
 	if viper.GetBool("printMemoryInfo") {
 		go MemoryDebugInfo()
 	}
+	go queueProcessor()
 	LaunchTes3mp()
 }
 
@@ -145,7 +146,7 @@ func queueProcessor() {
 		for len(Queue) > 0 {
 			var x string
 			x, Queue = Queue[len(Queue)-1], Queue[:len(Queue)-1]
-			go tes3mpOutputHandler(x)
+			tes3mpOutputHandler(x)
 		}
 
 	}

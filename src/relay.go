@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -35,19 +34,15 @@ func relayProcess(s []string) {
 	case "IRC":
 		log.Debugln("FROM IRC:", s)
 		ircChannel := s[1]
-		fmt.Println("ircChannel:", ircChannel)
 		// Json System Message
 		if ircChannel == systemChannel {
 			results := gjson.GetMany(s[3], "user", "method", "pid", "responce")
 
 			PlayerName := results[0].String()
 			Responce := results[3].String()
-			log.Debugln("sending Discord Message")
 			DiscordSendMessage(PlayerName + ": " + Responce)
 
 			ircResponce := "[TES3MP]" + " " + PlayerName + ": " + Responce
-			log.Debugln("sending to IRC-Chat Channel")
-			fmt.Println("sending Chat Message")
 
 			IRCSendMessage(chatChannel, ircResponce)
 		}

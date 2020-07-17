@@ -21,7 +21,7 @@ type PlayerStruct struct {
 func tes3mpOutputHandler(s string) {
 
 	// debugToggle := viper.GetBool("debug")
-	ServerOutput := viper.GetBool("ServerOutput")
+	ServerOutput := viper.GetBool("serveroutput")
 	if ServerOutput {
 		fmt.Println(s)
 	}
