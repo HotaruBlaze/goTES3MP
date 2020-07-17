@@ -20,7 +20,7 @@ var GitCommit string
 var Stdin io.WriteCloser
 
 // Build version
-var Build string
+var Build = "v0.0.0-Debug"
 
 // ServerRunning - TES3MP server Status
 var ServerRunning bool
@@ -45,6 +45,9 @@ var tes3mpLogMessage = "[goTES3MP]"
 // MultiWrite : Prints to logfile and os.Stdout
 var MultiWrite io.Writer
 
+// Queue : Array of Strings to process from tes3mp output
+var Queue []string
+
 func main() {
 	printBuildInfo()
 	initLogger()
@@ -63,6 +66,9 @@ func main() {
 	}
 	if viper.GetBool("irc.enable") {
 		go InitIRC()
+	}
+	if viper.GetBool("printMemoryInfo") {
+		go MemoryDebugInfo()
 	}
 	LaunchTes3mp()
 }
@@ -117,6 +123,8 @@ func LaunchTes3mp() {
 	if startErr != nil {
 		log.Fatalf("cmd.Run() failed with '%s'\n", startErr)
 	}
+
+	//// Does not seem to shutdown tes3mp correctly
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -124,10 +132,21 @@ func LaunchTes3mp() {
 		log.Infoln("Recieved Signal to exit, Exiting and notifying discord")
 		Stdin.Write([]byte("\n"))
 	}()
+	////
 
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
 		m := outScanner.Text()
-		go tes3mpOutputHandler(m)
+		Queue = AppendIfMissing(Queue, m)
+	}
+}
+func queueProcessor() {
+	for {
+		for len(Queue) > 0 {
+			var x string
+			x, Queue = Queue[len(Queue)-1], Queue[:len(Queue)-1]
+			go tes3mpOutputHandler(x)
+		}
+
 	}
 }

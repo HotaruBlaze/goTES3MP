@@ -3,11 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func AppendIfMissing(slice []string, i string) []string {
@@ -102,4 +105,27 @@ func removeRGBHex(s string) string {
 
 	message = re.ReplaceAllString(message, "")
 	return message
+}
+
+func PrintMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Infof("Alloc = %v MiB, TotalAlloc = %v MiB, Sys = %v MiB, NumGC = %v",
+		bToMb(m.Alloc),
+		bToMb(m.TotalAlloc),
+		bToMb(m.Sys),
+		m.NumGC,
+	)
+}
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
+}
+
+func MemoryDebugInfo() {
+	PrintMemUsage()
+	for {
+		time.Sleep(30 * time.Minute)
+		PrintMemUsage()
+	}
+
 }

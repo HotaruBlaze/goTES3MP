@@ -19,8 +19,10 @@ func LoadConfig() (ConfigLoaded bool) {
 
 	viper.SetDefault("tes3mp.baseDir", ".")
 	viper.SetDefault("debug", false)
-	viper.SetDefault("enable_ServerOutput", true)
+	viper.SetDefault("ServerOutput", true)
 	viper.SetDefault("commandPrefix", "!")
+
+	viper.SetDefault("printMemoryInfo", false)
 
 	viper.SetDefault("irc.enable", false)
 	viper.SetDefault("irc.server", "")

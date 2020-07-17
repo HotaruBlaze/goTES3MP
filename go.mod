@@ -4,8 +4,6 @@ go 1.13
 
 require (
 	github.com/bwmarrin/discordgo v0.21.1
-	github.com/hotarublaze/go-callbacks v0.0.0-20200420135312-b5ecbd6cb110
-	github.com/schorsch/go-callbacks v0.0.0-20150315195229-4ef7d8fd850d // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1 // indirect
