@@ -1,5 +1,5 @@
 # goTES3MP for TES3MP
-**The first Proof of Concept is now avalable (v0.1.0)**
+**The first Proof of Concept is now avalable (v0.1.5)**
 
 This is an attempt at creating a wrapper for tes3mp-server designed for running more intensive operations with minimal lua using output from tes3mp-server.
 # Note
