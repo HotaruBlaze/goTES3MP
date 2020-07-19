@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// PlayerStruct : the Struct used for json SYSTEM messages
 type PlayerStruct struct {
 	Name     string `json:"user"`
 	Method   string `json:"method"`
@@ -19,7 +20,6 @@ type PlayerStruct struct {
 }
 
 func tes3mpOutputHandler(s string) {
-	// debugToggle := viper.GetBool("debug")
 	ServerOutput := viper.GetBool("serveroutput")
 	if ServerOutput {
 		fmt.Println(s)

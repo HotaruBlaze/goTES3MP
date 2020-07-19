@@ -21,7 +21,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("serveroutput", true)
 	viper.SetDefault("commandPrefix", "!")
-
+	viper.SetDefault("webserver.port", ":8080")
 	viper.SetDefault("printMemoryInfo", false)
 
 	viper.SetDefault("irc.enable", false)

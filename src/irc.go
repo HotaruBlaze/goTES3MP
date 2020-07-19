@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -9,60 +8,59 @@ import (
 	irc "github.com/thoj/go-ircevent"
 )
 
-var IrcServer string
-var IrcPort string
-var IrcNick string
-var Systemchannel string
-var Chatchannel string
+var ircServer string
+var ircPort string
+var ircNick string
+var systemchannel string
+var chatchannel string
 var password string
-var Irccon *irc.Connection
+var irccon *irc.Connection
 
+// InitIRC : Initialize IRC
 func InitIRC() {
-	IrcServer = viper.GetString("irc.server")
-	IrcPort = viper.GetString("irc.port")
-	IrcNick = viper.GetString("irc.nick")
-	// Talking back and forth via json
-	Systemchannel = viper.GetString("irc.systemchannel")
+	ircServer = viper.GetString("irc.server")
+	ircPort = viper.GetString("irc.port")
+	ircNick = viper.GetString("irc.nick")
+	// IRC "System Channe;"
+	systemchannel = viper.GetString("irc.systemchannel")
 	// Add a extra channel for Talking via IRC
-	Chatchannel = viper.GetString("irc.chatchannel")
+	chatchannel = viper.GetString("irc.chatchannel")
 	password = viper.GetString("irc.pass")
-	Irccon = irc.IRC(IrcNick, IrcNick)
-	Irccon.Debug = false
-	Irccon.UseTLS = false
-	Irccon.Password = password
-	Irccon.AddCallback("001", func(e *irc.Event) {
-		log.Infoln("[IRC] Connected to", IrcServer+":"+IrcPort, "as", IrcNick)
-		Irccon.Join(Systemchannel)
-		log.Infoln("[IRC] Joined channel", Systemchannel)
-		Irccon.Join(Chatchannel)
-		log.Infoln("[IRC] Joined channel", Chatchannel)
+	irccon = irc.IRC(ircNick, ircNick)
+	irccon.Debug = false
+	irccon.UseTLS = false
+	irccon.Password = password
+	irccon.AddCallback("001", func(e *irc.Event) {
+		log.Infoln("[IRC] Connected to", ircServer+":"+ircPort, "as", ircNick)
+		irccon.Join(systemchannel)
+		log.Infoln("[IRC] Joined channel", systemchannel)
+		irccon.Join(chatchannel)
+		log.Infoln("[IRC] Joined channel", chatchannel)
 	})
-	Irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
+	irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
 		go func(event *irc.Event) {
-			if event.Arguments[0] == Systemchannel {
+			if event.Arguments[0] == systemchannel {
 				res := []string{"IRC", event.Arguments[0], event.Nick, event.Message()}
 				relayProcess(res)
 			}
-			if event.Arguments[0] == Chatchannel {
+			if event.Arguments[0] == chatchannel {
 				res := []string{"IRC", event.Arguments[0], event.Nick, event.Message()}
 				relayProcess(res)
 			}
 		}(event)
 	})
-	err := Irccon.Connect(IrcServer + ":" + IrcPort)
+	err := irccon.Connect(ircServer + ":" + ircPort)
 	if err != nil {
 		log.Errorln("Failed to connect to IRC")
 		log.Errorf("Err %s", err)
 		os.Exit(1)
-		// return
 	}
-	// Irccon.Join(Channel)
 	log.Println(tes3mpLogMessage, "IRC Module is now running")
 
-	Irccon.Loop()
+	irccon.Loop()
 }
 
 // IRCSendMessage : Send message to IRC Channel
 func IRCSendMessage(channel string, message string) {
-	Irccon.Privmsg(channel, message)
+	irccon.Privmsg(channel, message)
 }
