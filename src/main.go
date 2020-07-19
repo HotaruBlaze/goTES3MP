@@ -96,6 +96,8 @@ func initLogger() {
 	log.SetLevel(log.InfoLevel)
 	if Build != "" && GitCommit != "" {
 		log.Infoln("goTES3MP", "Build:", Build+", "+"Commit:", GitCommit)
+	} else {
+		log.Infoln("goTES3MP", "Build:", Build+", "+"Commit:", "MISSING")
 	}
 }
 
