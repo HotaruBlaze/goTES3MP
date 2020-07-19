@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/enriquebris/goconcurrentqueue"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -45,10 +46,8 @@ var tes3mpLogMessage = "[goTES3MP]"
 // MultiWrite : Prints to logfile and os.Stdout
 var MultiWrite io.Writer
 
-// Queue : Array of Strings to process from tes3mp output
-var Queue []string
-
 func main() {
+	queue := goconcurrentqueue.NewFIFO()
 	printBuildInfo()
 	initLogger()
 	LoadConfig()
@@ -70,8 +69,9 @@ func main() {
 	if viper.GetBool("printMemoryInfo") {
 		go MemoryDebugInfo()
 	}
-	go queueProcessor()
-	LaunchTes3mp()
+
+	go queueProcessor(queue)
+	LaunchTes3mp(queue)
 }
 
 func initLogger() {
@@ -110,7 +110,7 @@ func printBuildInfo() {
 }
 
 // LaunchTes3mp : Start and initialize TES3MP
-func LaunchTes3mp() {
+func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
 	tes3mpPath := viper.GetString("tes3mp.basedir")
 
 	tes3mpBinary := "/tes3mp-server"
@@ -137,20 +137,16 @@ func LaunchTes3mp() {
 
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
-		m := outScanner.Text()
-		Queue = append(Queue, m)
+		queue.Enqueue(outScanner.Text())
 	}
 }
-func queueProcessor() {
+func queueProcessor(queue *goconcurrentqueue.FIFO) {
 	for {
-		if len(Queue) > 0 {
-			for len(Queue) > 0 {
-				var x string
-				x, Queue = Queue[len(Queue)-1], Queue[:len(Queue)-1]
-				tes3mpOutputHandler(x)
-			}
-		} else {
-			time.Sleep(10 * time.Millisecond)
+		str, err := queue.DequeueOrWaitForNextElement()
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
+		tes3mpOutputHandler(str.(string))
 	}
 }
