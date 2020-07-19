@@ -11,7 +11,7 @@ local cjson = require("cjson")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v3.0.1-goTES3MP"
+IrcBridge.version = "v3.0.2-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 
 IrcBridge.defaultConfig = {
@@ -75,39 +75,45 @@ IrcBridge.RecvMessage = function()
         function(user, systemchannel, message)
             if message ~= lastMessage and tableHelper.getCount(Players) > 0 then
                 local responce = cjson.decode(message)
-                for pid, player in pairs(Players) do
-                    if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
-                        local wherefrom = ""
-                        if responce.method == "Discord" then
-                            wherefrom = discordColor .. "[" .. responce.method .. "]" .. color.Default
-                        elseif responce.method == "IRC" then
-                            wherefrom = ircColor .. "[" .. responce.method .. "]" .. color.Default
-                        else 
-                            wherefrom = color.Default .. "[" .. responce.method .. "]" .. color.Default
+                if responce.method == "Discord" or responce.method == "IRC" then
+                    for pid, player in pairs(Players) do
+                        if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
+                            IrcBridge.ChatMessage(pid, responce)
                         end
-
-                        if responce.role ~= "" and responce.role_color ~= "" then
-                            local staffRole = "#"..responce.role_color .. "[" .. responce.role .. "]" .. color.Default
-                            tes3mp.SendMessage(
-                                pid,
-                                wherefrom .." ".. staffRole .." "..responce.user .. ": " .. responce.responce .. "\n",
-                                false
-                            )
-						else 
-							tes3mp.SendMessage(
-                                pid,
-                                wherefrom  .." "..responce.user .. ": " .. responce.responce .. "\n",
-                                false
-                            )
-						end
                     end
                 end
-				lastMessage = message
             end
+            lastMessage = message
         end
     )
 
     tes3mp.RestartTimer(IRCTimerId, time.seconds(1))
+end
+
+IrcBridge.ChatMessage = function(pid, responce) 
+    local wherefrom = ""
+    if responce.method == "Discord" then
+        wherefrom = discordColor .. "[" .. responce.method .. "]" .. color.Default
+    elseif responce.method == "IRC" then
+        wherefrom = ircColor .. "[" .. responce.method .. "]" .. color.Default
+    else 
+        wherefrom = color.Default .. "[" .. responce.method .. "]" .. color.Default
+    end
+
+    if responce.role ~= "" and responce.role_color ~= "" then
+        local staffRole = "#"..responce.role_color .. "[" .. responce.role .. "]" .. color.Default
+        tes3mp.SendMessage(
+            pid,
+            wherefrom .." ".. staffRole .." "..responce.user .. ": " .. responce.responce .. "\n",
+            false
+        )
+    else 
+        tes3mp.SendMessage(
+            pid,
+            wherefrom  .." "..responce.user .. ": " .. responce.responce .. "\n",
+            false
+        )
+    end
 end
 
 IrcBridge.SendMessage = function(message)
