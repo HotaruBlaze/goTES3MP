@@ -19,7 +19,6 @@ type PlayerStruct struct {
 }
 
 func tes3mpOutputHandler(s string) {
-
 	// debugToggle := viper.GetBool("debug")
 	ServerOutput := viper.GetBool("serveroutput")
 	if ServerOutput {
@@ -67,30 +66,16 @@ func tes3mpOutputHandler(s string) {
 			}
 		}
 	}
-	// isTrue, _ = regexp.MatchString(`\[Chat\]`, s)
-	// if isTrue {
-	// 	// responce = name, pid, message
-	// 	// responce := tes3mpOnPlayerSendMessage(s)
-	// 	// relayProcess(responce)
-	// 	// Context
-	// 	// fmt.Println("[EVENT-TEST]", "Recieved the following:", responce)
-	// 	// Context.CallbacksCall("tes3mp.OnPlayerSendMessage", TestFunction1)
-	// 	// Context.CallbacksCall("irc.sendMessage", onIRCSendMessage)
-
-	// }
-
 	isTrue, _ = regexp.MatchString(`Called "OnServerPostInit"`, s)
 	if isTrue {
 		log.Infoln(tes3mpLogMessage, "Tes3mp server is now online")
 		ServerRunning = true
-		statusMSG := "**" + "[TES3MP] Server is online. :yellow_heart:" + "**"
-		DiscordSendAlert(statusMSG)
+		DiscordSendAlert("**" + "[TES3MP] Server is online. :yellow_heart:" + "**")
 	}
 	isTrue, _ = regexp.MatchString(`Called "OnServerExit"`, s)
 	if isTrue {
 		log.Infoln(tes3mpLogMessage, "Tes3mp server is now Offline")
-		ServerRunning = true
-		statusMSG := "**" + "[TES3MP] Server is offline. :warning:" + "**"
-		DiscordSendAlert(statusMSG)
+		ServerRunning = false
+		DiscordSendAlert("**" + "[TES3MP] Server is offline. :warning:" + "**")
 	}
 }
