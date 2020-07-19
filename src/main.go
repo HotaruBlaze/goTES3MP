@@ -18,7 +18,7 @@ import (
 // GitCommit used to build
 var GitCommit string
 
-var Stdin io.WriteCloser
+var stdin io.WriteCloser
 
 // Build version
 var Build = "v0.0.0-Debug"
@@ -117,7 +117,7 @@ func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
 
 	cmd := exec.Command(tes3mpPath + tes3mpBinary)
 
-	Stdin, _ = cmd.StdinPipe()
+	stdin, _ = cmd.StdinPipe()
 	stdout, _ := cmd.StdoutPipe()
 
 	startErr := cmd.Start()
@@ -131,7 +131,7 @@ func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
 	go func() {
 		<-c
 		log.Infoln("Recieved Signal to exit, Exiting and notifying discord")
-		Stdin.Write([]byte("\n"))
+		stdin.Write([]byte("\n"))
 	}()
 	////
 

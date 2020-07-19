@@ -1,27 +1,29 @@
 package main
 
-// WIP
-
 import (
 	"fmt"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/tidwall/pretty"
 )
 
-// InitWebserver Start webfrontend
+// InitWebserver : Initalize webserver
 func InitWebserver() {
+	webport := viper.GetString("webserver.port")
 	http.HandleFunc("/status", status)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(webport, nil)
 }
 
-// serverInfo - Print current ServerStatus struct as json
+// status : Print current ServerStatus struct as json
 func status(w http.ResponseWriter, r *http.Request) {
 	s := UpdateStatus()
 	status := pretty.Pretty(s)
 	if s == nil {
-		log.Errorln("Oh god, what did u do")
+		log.Errorln("UpdateStatus returned nil")
+		fmt.Fprintf(w, string("An Error Occurred while getting /status"))
+	} else {
+		fmt.Fprintf(w, string(status))
 	}
-	fmt.Fprintf(w, string(status))
 }

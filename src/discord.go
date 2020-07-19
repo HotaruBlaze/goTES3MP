@@ -30,7 +30,6 @@ func InitDiscord() {
 	DiscordSession = Discord
 
 	Discord.AddHandler(messageCreate)
-	// Discord.StateEnabled = true
 	Discord.AddHandler(UpdateDiscordStatus)
 	err = Discord.Open()
 	if err != nil {
@@ -92,12 +91,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		relayProcess(res)
 	}
 }
+
+// DiscordSendMessage : Send message to Discord serverChat
 func DiscordSendMessage(msg string) {
 	serverChat := viper.GetString("discord.serverChat")
-
 	DiscordSession.ChannelMessageSend(serverChat, msg)
-
 }
+
+// DiscordSendAlert : Send Alert to Discord alertsChannel
 func DiscordSendAlert(msg string) {
 	alertChannel := viper.GetString("discord.alertsChannel")
 	DiscordSession.ChannelMessageSend(alertChannel, msg)
@@ -123,7 +124,6 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 		}
 
 		idleSince := 0
-		time.Sleep(20 * time.Second)
 		usd := discordgo.UpdateStatusData{
 			IdleSince: &idleSince,
 			Game: &discordgo.Game{
@@ -138,6 +138,7 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 		if err != nil {
 			log.Warnln("UpdateDiscordStatus failed to update status.", err)
 		}
+		time.Sleep(5 * time.Second)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// AppendIfMissing : Appends string if missing from array.
 func AppendIfMissing(slice []string, i string) []string {
 	for _, ele := range slice {
 		if ele == i {
@@ -22,6 +23,7 @@ func AppendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
+// RemoveEntryFromArray : Remove Entry from Array.
 func RemoveEntryFromArray(array []string, remove string) []string {
 	workArr := array
 	for i := 0; i < len(workArr); i++ {
@@ -78,6 +80,7 @@ func toHexInt(n *big.Int) string {
 	return fmt.Sprintf("%x", n) // or %X or upper case
 }
 
+// FindinArray : Search String array for a value
 func FindinArray(slice []string, val string) (int, bool) {
 	for i, item := range slice {
 		if item == val {
@@ -107,7 +110,7 @@ func removeRGBHex(s string) string {
 	return message
 }
 
-func PrintMemUsage() {
+func printMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	log.Infof("Alloc = %v MiB, TotalAlloc = %v MiB, Sys = %v MiB, NumGC = %v",
@@ -121,11 +124,12 @@ func bToMb(b uint64) uint64 {
 	return b / 1024 / 1024
 }
 
+// MemoryDebugInfo : Print current memory and GC cycles, Used for monitoring for memory leaks
 func MemoryDebugInfo() {
-	PrintMemUsage()
+	printMemUsage()
 	for {
 		time.Sleep(30 * time.Minute)
-		PrintMemUsage()
+		printMemUsage()
 	}
 
 }

@@ -27,6 +27,7 @@ func relayProcess(s []string) {
 	res.Method = s[0]
 	if viper.GetBool("debug") {
 		log.Println("Length of array sent to relayProcess is", len(s))
+		log.Println(s)
 	}
 	switch res.Method {
 	case "Tes3mp-Command":
