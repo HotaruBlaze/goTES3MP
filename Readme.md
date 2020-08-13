@@ -6,6 +6,7 @@ This is an attempt at creating a bot for tes3mp-server designed for running more
 * TES3MP does not shutdown correctly most of the time with SIGINT, or closing the application, It's recommended to use another script for this, such as [ShutdownServer](https://github.com/tes3mp-scripts/ShutdownServer).
 * Sometimes server output from TES3MP will no longer be printed into the terminal, The reason is currently unclear.
 * Sometimes goTES3MP loses connection to Discord, this usually fixes itself after a couple of minutes, if not try restarting goTES3MP. 
+* Mentioning Channel names and emotes will be glitched/formatted incorrectly, This is known and a fix is being looked for.
 
 # Goal
 - [X] Create a extendable application for manipulating and handling TES3MP output
