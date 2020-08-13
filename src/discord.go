@@ -57,11 +57,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if m.ChannelID == viper.GetString("discord.serverchat") {
 		if viper.GetBool("discord.enablecommands") {
-			if viper.GetString("discord.commandprefix") != "" {
-				if strings.HasPrefix(m.Content, viper.GetString("discord.commandprefix")) {
-					messageCommand(m)
-					return
-				}
+			if strings.HasPrefix(m.Content, viper.GetString("discord.commandprefix")) {
+				messageCommand(m)
+				return
 			}
 		}
 	}
@@ -74,14 +72,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		index, pos := -1, -1
 		for r, i := range discordRoles {
 			userroles = append(userroles, i.Name)
-			if i.Name == persistantData.Users[m.Author.ID] {
-				index = r
-				pos = i.Position
-				break
-			} else {
-				if i.Position > pos {
+			_, validRole := FindinArray(persistantData.PlayerRoles, i.Name)
+			if validRole {
+				if i.Name == persistantData.Users[m.Author.ID] {
 					index = r
 					pos = i.Position
+					break
+				} else {
+					if i.Position > pos {
+						index = r
+						pos = i.Position
+					}
 				}
 			}
 		}
@@ -132,7 +133,7 @@ func messageCommand(m *discordgo.MessageCreate) {
 					if roleExists {
 						persistantData.PlayerRoles = append(persistantData.PlayerRoles, commandArgs[1])
 						pdsaveData()
-						DiscordSendMessage("`Created role " + commandArgs[1] + "`")
+						DiscordSendMessage("`Added role " + commandArgs[1] + " as avalable role`")
 					} else {
 						DiscordSendMessage("`Role " + commandArgs[1] + " does not exist on discord." + "`")
 
@@ -170,7 +171,6 @@ func messageCommand(m *discordgo.MessageCreate) {
 							if r == commandArgs[1] {
 								delete(persistantData.Users, n)
 							}
-
 						}
 						pdsaveData()
 						DiscordSendMessage("`Removed role " + commandArgs[1] + "`")
@@ -218,8 +218,7 @@ func messageCommand(m *discordgo.MessageCreate) {
 				}
 				persistantData.Users[m.Author.ID] = commandArgs[1]
 				pdsaveData()
-				DiscordSendMessage("Set role to `" + commandArgs[1] + "`")
-				fmt.Println("Valid Role for this users")
+				DiscordSendMessage("`Set role to " + commandArgs[1] + "`")
 			} else {
 				fmt.Println("You do not have access to this role.")
 			}
