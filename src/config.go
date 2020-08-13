@@ -33,6 +33,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("irc.pass", "")
 
 	viper.SetDefault("discord.enableCommands", true)
+	viper.SetDefault("discord.boldPlayerNames", false)
 	viper.SetDefault("discord.enable", false)
 	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("discord.token", "")

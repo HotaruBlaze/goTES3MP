@@ -22,6 +22,7 @@ type jsonResponce struct {
 
 func relayProcess(s []string) {
 	var systemChannel = viper.GetString("irc.systemchannel")
+	var boldPlayerNames = viper.GetBool("discord.boldPlayerNames")
 	var chatChannel = viper.GetString("irc.chatchannel")
 	res := &jsonResponce{}
 	res.Method = s[0]
@@ -78,7 +79,12 @@ func relayProcess(s []string) {
 				relayProcess(res)
 				break
 			}
-			DiscordSendMessage(PlayerName + ": " + Responce)
+			if boldPlayerNames {
+				DiscordSendMessage("**" + PlayerName + ":" + "**" + " " + Responce)
+			} else {
+				DiscordSendMessage(PlayerName + ": " + Responce)
+			}
+
 			ircResponce := "[TES3MP]" + " " + PlayerName + ": " + Responce
 			IRCSendMessage(chatChannel, ircResponce)
 		}
