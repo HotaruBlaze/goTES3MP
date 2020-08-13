@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -39,32 +38,6 @@ func tes3mpOutputHandler(s string) {
 			TES3MPVersion = dedicatedServerInfo[3] + " " + build
 		}
 
-	}
-	isTrue, _ = regexp.MatchString(`\[User\]`, s)
-	if isTrue {
-		var player PlayerStruct
-		userarr := strings.Split(s, " ")
-		json.Unmarshal([]byte(userarr[5]), &player)
-
-		switch player.Responce {
-		case "Connected":
-			log.Infoln(tes3mpLogMessage, "Player", player.Name, player.Responce)
-			CurrentPlayers = CurrentPlayers + 1
-			Players = AppendIfMissing(Players, player.Name)
-			DiscordSendMessage("[TES3MP] " + player.Name + " joined the server.")
-
-		case "Disconnected":
-			log.Infoln(tes3mpLogMessage, "Player", player.Name, player.Responce)
-			_, found := FindinArray(Players, player.Name)
-			if found {
-				CurrentPlayers = CurrentPlayers - 1
-				Players = RemoveEntryFromArray(Players, player.Name)
-				DiscordSendMessage("[TES3MP] " + player.Name + " left the server")
-			} else {
-				DiscordSendMessage("[TES3MP] " + player.Name + " left the server")
-				log.Println(tes3mpLogMessage, player.Name, "left the server, but we never got their connected")
-			}
-		}
 	}
 	isTrue, _ = regexp.MatchString(`Called "OnServerPostInit"`, s)
 	if isTrue {

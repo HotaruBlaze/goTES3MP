@@ -75,6 +75,10 @@ IrcBridge.RecvMessage = function()
         function(user, systemchannel, message)
             if message ~= lastMessage and tableHelper.getCount(Players) > 0 then
                 local responce = cjson.decode(message)
+                -- Unfinishedd
+                -- if responce.method == "Command" then 
+                    -- IrcBridge.ServerCommand(pid, responce)
+                -- end
                 if responce.method == "Discord" or responce.method == "IRC" then
                     for pid, player in pairs(Players) do
                         if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
@@ -115,8 +119,11 @@ IrcBridge.ChatMessage = function(pid, responce)
         )
     end
 end
+-- IrcBridge.ServerCommand = function (responce)
 
-IrcBridge.SendMessage = function(message)
+
+-- end
+IrcBridge.SendSystemMessage = function(message)
     s:sendChat(systemchannel, message)
 end
 
@@ -139,7 +146,7 @@ customEventHooks.registerValidator(
 		    return
         else
             responce = cjson.encode(messageJson)
-            IrcBridge.SendMessage(responce)
+            IrcBridge.SendSystemMessage(responce)
         end
     end
 )
@@ -165,3 +172,4 @@ customEventHooks.registerValidator(
         s:shutdown()
     end
 )
+return IrcBridge

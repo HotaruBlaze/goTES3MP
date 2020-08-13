@@ -30,8 +30,39 @@ func relayProcess(s []string) {
 		log.Println(s)
 	}
 	switch res.Method {
-	case "Tes3mp-Command":
-		// onTes3mpCommand(s[3])
+	// case "Command":
+	// onTes3mpCommand(s[3])
+	case "Player":
+		results := gjson.GetMany(s[1], "user", "method", "pid", "responce")
+
+		playerName := results[0].String()
+		responce := results[3].String()
+		if responce == "Connected" {
+			log.Infoln(tes3mpLogMessage, "Player", playerName, "joined the server")
+
+			CurrentPlayers = CurrentPlayers + 1
+			Players = AppendIfMissing(Players, playerName)
+			connectionMessage := "[TES3MP] " + playerName + " joined the server"
+
+			IRCSendMessage(chatChannel, connectionMessage)
+			DiscordSendMessage(connectionMessage)
+		}
+		if responce == "Disconnected" {
+			log.Infoln(tes3mpLogMessage, "Player", playerName, "left the server")
+
+			_, found := FindinArray(Players, playerName)
+			if found {
+				CurrentPlayers = CurrentPlayers - 1
+				Players = RemoveEntryFromArray(Players, playerName)
+			} else {
+				log.Println(tes3mpLogMessage, playerName, "left the server, but we never got their connected")
+			}
+
+			connectionMessage := "[TES3MP] " + results[0].String() + " left the server"
+			IRCSendMessage(chatChannel, connectionMessage)
+			DiscordSendMessage(connectionMessage)
+		}
+
 	case "IRC":
 		ircChannel := s[1]
 		// Json System Message
@@ -39,11 +70,16 @@ func relayProcess(s []string) {
 			results := gjson.GetMany(s[3], "user", "method", "pid", "responce")
 
 			PlayerName := results[0].String()
+			Method := results[1].String()
 			Responce := results[3].String()
+
+			if Method == "Player" {
+				res := []string{"Player", s[3]}
+				relayProcess(res)
+				break
+			}
 			DiscordSendMessage(PlayerName + ": " + Responce)
-
 			ircResponce := "[TES3MP]" + " " + PlayerName + ": " + Responce
-
 			IRCSendMessage(chatChannel, ircResponce)
 		}
 		// From dedicated IRC Chat
@@ -71,8 +107,6 @@ func relayProcess(s []string) {
 		res.Responce = s[3]
 		log.Debugln("[Relay][Discord]", s)
 
-		// This does not work correctly if u have multiple valid roles
-		// Not really sure how to fix this at this time.
 		if len(s) > 4 {
 			if s[4] != "" && s[5] != "" {
 				res.Role = s[4]
@@ -91,6 +125,6 @@ func relayProcess(s []string) {
 		IRCSendMessage(chatChannel, ircResponce)
 
 	default:
-		log.Error(tes3mpLogMessage, `Something tried to use method "`+res.Method+`" but has no handler registered`)
+		log.Error(tes3mpLogMessage, ` Something tried to use method "`+res.Method+`" but has no handler registered`)
 	}
 }
