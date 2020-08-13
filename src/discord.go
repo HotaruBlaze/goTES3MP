@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	big "math/big"
 	"os"
 	"os/signal"
@@ -13,6 +14,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
+
+type discordRole struct {
+	Position int    `json:"position"`
+	Color    string `json:"color"`
+	Name     string `json:"name"`
+}
 
 // DiscordSession : Global Discord Session
 var DiscordSession *discordgo.Session
@@ -45,50 +52,204 @@ func InitDiscord() {
 
 }
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	StaffRoles := viper.GetStringSlice("discord.staffRoles")
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-
-	if m.Content != "" && m.ChannelID == viper.GetString("discord.serverchat") {
-		roleIndex := -1
-		var HighestRole string
-		var res []string
-		var DiscordName string
-		allowhexcolors := viper.GetBool("discord.allowcolorhexusage")
-		userroles := getDiscordRoles(m.Author.ID, m.GuildID)
-		for role := range userroles {
-			i, found := FindinArray(StaffRoles, role)
-			if found {
-				if i == 0 || roleIndex < i {
-					if viper.GetBool("debug") {
-						log.Println(role, "ID:", i)
-					}
-					roleIndex = i
-					HighestRole = role
+	if m.ChannelID == viper.GetString("discord.serverchat") {
+		if viper.GetBool("discord.enablecommands") {
+			if viper.GetString("discord.commandprefix") != "" {
+				if strings.HasPrefix(m.Content, viper.GetString("discord.commandprefix")) {
+					messageCommand(m)
+					return
 				}
 			}
 		}
+	}
+	if m.Content != "" && m.ChannelID == viper.GetString("discord.serverchat") {
+		allowhexcolors := viper.GetBool("discord.allowcolorhexusage")
+		var staffMember bool = false
+		var userroles []string
+		var res []string
+		discordRoles := getDiscordRoles(m.Author.ID, m.GuildID)
+		index, pos := -1, -1
+		for r, i := range discordRoles {
+			userroles = append(userroles, i.Name)
+			if i.Name == persistantData.Users[m.Author.ID] {
+				index = r
+				pos = i.Position
+				break
+			} else {
+				if i.Position > pos {
+					index = r
+					pos = i.Position
+				}
+			}
+		}
+
+		var DiscordName string
 		gmember, _ := DiscordSession.GuildMember(m.GuildID, m.Author.ID)
 		if gmember.Nick != "" {
 			DiscordName = gmember.Nick
 		} else {
 			DiscordName = m.Author.Username
 		}
-		if roleIndex != -1 && HighestRole != "" {
-			res = []string{"Discord", DiscordName, "-1", string(m.Content), HighestRole, userroles[HighestRole]}
+
+		if index != -1 && discordRoles[index].Name != "" {
+			res = []string{"Discord", DiscordName, "-1", string(m.Content), discordRoles[index].Name, discordRoles[index].Color}
 			log.Debugln(res)
 		} else {
-			if allowhexcolors {
-				res = []string{"Discord", DiscordName, "-1", string(m.Content), HighestRole, userroles[HighestRole]}
+			if allowhexcolors || staffMember {
+				res = []string{"Discord", DiscordName, "-1", string(m.Content), discordRoles[index].Name, discordRoles[index].Color}
 			} else {
 				cleanString := stringVerifier(true, string(m.Content))
 				res = []string{"Discord", DiscordName, "-1", string(cleanString)}
-
 			}
 		}
-
 		relayProcess(res)
+	}
+}
+
+func messageCommand(m *discordgo.MessageCreate) {
+	commandArgs := strings.Split(trimLeftChar(m.Content), " ")
+	commandArgs[0] = strings.ToLower(commandArgs[0])
+	fmt.Println(commandArgs)
+	if commandArgs[0] == "addrole" {
+		if isStaffMember(m.Author.ID, m.GuildID) {
+			if len(commandArgs) > 1 && commandArgs[1] != "" {
+				_, i := FindinArray(persistantData.PlayerRoles, commandArgs[1])
+				if i == false {
+					g, err := DiscordSession.Guild(m.GuildID)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					r := g.Roles
+					var roles []string
+					for _, v := range r {
+						roles = AppendIfMissing(roles, v.Name)
+					}
+					_, roleExists := FindinArray(roles, commandArgs[1])
+					if roleExists {
+						persistantData.PlayerRoles = append(persistantData.PlayerRoles, commandArgs[1])
+						pdsaveData()
+						DiscordSendMessage("`Created role " + commandArgs[1] + "`")
+					} else {
+						DiscordSendMessage("`Role " + commandArgs[1] + " does not exist on discord." + "`")
+
+					}
+				} else {
+					DiscordSendMessage("`Role " + commandArgs[1] + " already Exists`")
+				}
+			} else {
+				DiscordSendMessage("`Role name Missing.`")
+			}
+		} else {
+			DiscordSendMessage("`You do not have permission for this command.`")
+		}
+		return
+	}
+	if commandArgs[0] == "removerole" {
+		if isStaffMember(m.Author.ID, m.GuildID) {
+			if len(commandArgs) > 1 && commandArgs[1] != "" {
+				_, i := FindinArray(persistantData.PlayerRoles, commandArgs[1])
+				if i == true {
+					g, err := DiscordSession.Guild(m.GuildID)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					r := g.Roles
+					var roles []string
+					for _, v := range r {
+						roles = AppendIfMissing(roles, v.Name)
+					}
+					_, roleExists := FindinArray(roles, commandArgs[1])
+					if roleExists {
+						persistantData.PlayerRoles = RemoveEntryFromArray(persistantData.PlayerRoles, commandArgs[1])
+						for n, r := range persistantData.Users {
+							if r == commandArgs[1] {
+								delete(persistantData.Users, n)
+							}
+
+						}
+						pdsaveData()
+						DiscordSendMessage("`Removed role " + commandArgs[1] + "`")
+					} else {
+						DiscordSendMessage("`Role " + commandArgs[1] + " does not exist on discord." + "`")
+
+					}
+				} else {
+					DiscordSendMessage("`Role " + commandArgs[1] + " does not Exists`")
+				}
+			} else {
+				DiscordSendMessage("`Role name Missing.`")
+			}
+		} else {
+			DiscordSendMessage("`You do not have permission for this command.`")
+		}
+		return
+	}
+	if commandArgs[0] == "setrole" {
+		var chatRoles, userRoles, validRoles []string
+		// Get all avalable PlayerRoles
+		for _, role := range persistantData.PlayerRoles {
+			chatRoles = AppendIfMissing(chatRoles, role)
+		}
+
+		// Get users roles
+		serverRoles := getDiscordRoles(m.Author.ID, m.GuildID)
+		for _, r := range serverRoles {
+			userRoles = AppendIfMissing(userRoles, r.Name)
+		}
+		// Get roles User is allowed to use
+		for _, v := range chatRoles {
+			_, found := FindinArray(userRoles, v)
+			if found {
+				validRoles = AppendIfMissing(validRoles, v)
+			}
+		}
+		if len(commandArgs) > 1 {
+			_, f := FindinArray(validRoles, commandArgs[1])
+			if f {
+				if persistantData.Users == nil {
+					persistantData.Users = map[string]string{
+						m.Author.ID: commandArgs[1],
+					}
+				}
+				persistantData.Users[m.Author.ID] = commandArgs[1]
+				pdsaveData()
+				DiscordSendMessage("Set role to `" + commandArgs[1] + "`")
+				fmt.Println("Valid Role for this users")
+			} else {
+				fmt.Println("You do not have access to this role.")
+			}
+
+		} else {
+			var msg string
+			msg = msg + "You have the following roles avalable." + "\n" + "```" + "\n"
+			for _, r := range validRoles {
+				msg = msg + r + "\n"
+			}
+			msg = msg + "```"
+			if persistantData.Users[m.Author.ID] != "" {
+				msg = msg + "You current role is "
+				msg = msg + "`" + persistantData.Users[m.Author.ID] + "`"
+			}
+			fmt.Println(msg)
+			DiscordSendMessage(msg)
+		}
+	}
+	if commandArgs[0] == "list" {
+		responce := ""
+		if len(Players) > 0 {
+			responce = "```" + "\n"
+			for _, player := range Players {
+				responce = responce + player + "\n"
+			}
+			responce = responce + "\n" + "```"
+		}
+		responce = responce + "`" + "Currently online: " + strconv.Itoa(len(Players)) + "/" + strconv.Itoa(MaxPlayers) + "`"
+		DiscordSendMessage(responce)
 	}
 }
 
@@ -102,7 +263,6 @@ func DiscordSendMessage(msg string) {
 func DiscordSendAlert(msg string) {
 	alertChannel := viper.GetString("discord.alertsChannel")
 	DiscordSession.ChannelMessageSend(alertChannel, msg)
-
 }
 
 // UpdateDiscordStatus Update discord bot status to match player count on TES3MP
@@ -142,25 +302,47 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 	}
 }
 
-func getDiscordRoles(UserID string, GuildID string) map[string]string {
-	roles := make(map[string]string)
-
-	m, err := DiscordSession.GuildMember(GuildID, UserID)
+func getDiscordRoles(UserID string, GuildID string) []discordRole {
+	var discordRoles []discordRole
+	member, err := DiscordSession.GuildMember(GuildID, UserID)
 	if err != nil {
 		log.Errorln("ERR:", err)
 	}
-	for _, role := range m.Roles {
+	for _, role := range member.Roles {
 		role, err := DiscordSession.State.Role(GuildID, role)
 		if err != nil {
 			log.Errorln("getDiscordRoles Failed to get user roles from discord server.")
 		}
-
 		color := strings.ToUpper(
 			toHexInt(
 				big.NewInt(int64(role.Color)),
 			),
 		)
-		roles[role.Name] = color
+		r := discordRole{
+			Position: role.Position,
+			Color:    color,
+			Name:     role.Name,
+		}
+		discordRoles = append(discordRoles, r)
 	}
-	return roles
+	return discordRoles
+}
+
+func isStaffMember(UserID string, GuildID string) bool {
+	staffRoles := viper.GetStringSlice("discord.staffroles")
+	discordRoles := getDiscordRoles(UserID, GuildID)
+	guild, err := DiscordSession.Guild(GuildID)
+	if err != nil {
+		println("Failed to figure out if a user is a staff member.")
+	}
+	if UserID == guild.OwnerID {
+		return true
+	}
+	for _, i := range discordRoles {
+		_, found := FindinArray(staffRoles, i.Name)
+		if found {
+			return true
+		}
+	}
+	return false
 }

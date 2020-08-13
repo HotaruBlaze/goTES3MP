@@ -7,18 +7,18 @@ customEventHooks.registerHandler("OnPlayerAuthentified", function(eventStatus, p
 	local messageJson = {
 		user = tes3mp.GetName(pid),
 		pid = pid,
-		method = "User",
+		method = "Player",
 		responce = "Connected"
 	}
-	tes3mp.LogMessage(enumerations.log.INFO, "[User] " .. cjson.encode(messageJson))
+	IrcBridge.SendSystemMessage(cjson.encode(messageJson))
 end)
 
 customEventHooks.registerValidator("OnPlayerDisconnect", function(eventStatus, pid)
 	local messageJson = {
 		user = tes3mp.GetName(pid),
 		pid = pid,
-		method = "User",
+		method = "Player",
 		responce = "Disconnected"
 	}
-	tes3mp.LogMessage(enumerations.log.INFO, "[User] " .. cjson.encode(messageJson))
+	IrcBridge.SendSystemMessage(cjson.encode(messageJson))
 end)

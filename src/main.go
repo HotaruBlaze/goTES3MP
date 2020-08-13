@@ -51,6 +51,7 @@ func main() {
 	printBuildInfo()
 	initLogger()
 	LoadConfig()
+	pdloadData()
 	enableDebug := viper.GetBool("debug")
 	if enableDebug {
 		log.Warnln("Debug mode is enabled")
@@ -63,9 +64,7 @@ func main() {
 	if viper.GetBool("discord.enable") {
 		go InitDiscord()
 	}
-	if viper.GetBool("irc.enable") {
-		go InitIRC()
-	}
+	go InitIRC()
 	if viper.GetBool("printMemoryInfo") {
 		go MemoryDebugInfo()
 	}
@@ -134,6 +133,7 @@ func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
 		<-c
 		log.Infoln("Recieved Signal to exit, Exiting and notifying discord")
 		stdin.Write([]byte("\n"))
+
 	}()
 	////
 

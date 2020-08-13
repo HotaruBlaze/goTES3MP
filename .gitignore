@@ -1,3 +1,4 @@
+logs/
 build/
 goTes3mp_config.json
-logs/
+goTES3MP/data.json

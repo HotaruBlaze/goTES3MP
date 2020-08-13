@@ -34,8 +34,10 @@ func InitIRC() {
 		log.Infoln("[IRC] Connected to", ircServer+":"+ircPort, "as", ircNick)
 		irccon.Join(systemchannel)
 		log.Infoln("[IRC] Joined channel", systemchannel)
-		irccon.Join(chatchannel)
-		log.Infoln("[IRC] Joined channel", chatchannel)
+		if chatchannel != "" && viper.GetBool("irc.enableChatChannel") {
+			irccon.Join(chatchannel)
+			log.Infoln("[IRC] Joined channel", chatchannel)
+		}
 	})
 	irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
 		go func(event *irc.Event) {
