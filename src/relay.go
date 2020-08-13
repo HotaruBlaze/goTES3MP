@@ -45,7 +45,7 @@ func relayProcess(s []string) {
 			connectionMessage := "[TES3MP] " + playerName + " joined the server"
 
 			IRCSendMessage(chatChannel, connectionMessage)
-			DiscordSendMessage(connectionMessage)
+			DiscordSendMessage("**" + connectionMessage + "**")
 		}
 		if responce == "Disconnected" {
 			log.Infoln(tes3mpLogMessage, "Player", playerName, "left the server")
@@ -60,7 +60,7 @@ func relayProcess(s []string) {
 
 			connectionMessage := "[TES3MP] " + results[0].String() + " left the server"
 			IRCSendMessage(chatChannel, connectionMessage)
-			DiscordSendMessage(connectionMessage)
+			DiscordSendMessage("**" + connectionMessage + "**")
 		}
 
 	case "IRC":
