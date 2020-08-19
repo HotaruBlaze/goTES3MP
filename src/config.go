@@ -40,7 +40,6 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
-	viper.SetDefault("discord.userRoles", []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
