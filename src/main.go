@@ -143,12 +143,29 @@ func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
 	}
 }
 func queueProcessor(queue *goconcurrentqueue.FIFO) {
+	var count uint8
+	count = 0
 	for {
 		str, err := queue.DequeueOrWaitForNextElement()
-		if err != nil {
-			fmt.Println(err)
-			return
+
+		switch err {
+		case nil:
+			tes3mpOutputHandler(str.(string))
+			switch count {
+			case 0:
+				break
+			default:
+				count = 0
+			}
+		default:
+			log.Warnln("[queueProcessor]: error", err)
+			count++
+			time.Sleep(1 * time.Minute)
+			switch count {
+			case 10:
+				log.Errorln("[queueProcessor]: Errored", string(count), "times and was killed.")
+				return
+			}
 		}
-		tes3mpOutputHandler(str.(string))
 	}
 }
