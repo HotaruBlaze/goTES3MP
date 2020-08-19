@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type persistantDataStruct struct {
@@ -22,7 +23,7 @@ func pdloadData() {
 	}
 	persistantDataFile, err := os.Open(persistantFilePath)
 	if err != nil {
-		fmt.Println(err)
+		log.Warnln("[pdloadData]: Command removerole errored with", err)
 		os.Exit(1)
 	}
 	defer persistantDataFile.Close()
@@ -34,9 +35,8 @@ func pdloadData() {
 func pdsaveData() {
 	pd, err := json.Marshal(&persistantData)
 	if err != nil {
-		fmt.Println(err)
+		log.Warnln("[pdsaveData]: Command removerole errored with", err)
 		return
 	}
-	fmt.Println(string(pd))
 	ioutil.WriteFile(persistantFilePath, pd, os.ModePerm)
 }
