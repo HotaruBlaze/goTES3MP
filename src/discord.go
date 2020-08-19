@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	big "math/big"
 	"os"
 	"os/signal"
@@ -113,15 +112,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 func messageCommand(m *discordgo.MessageCreate) {
 	commandArgs := strings.Split(trimLeftChar(m.Content), " ")
 	commandArgs[0] = strings.ToLower(commandArgs[0])
-	fmt.Println(commandArgs)
 	if commandArgs[0] == "addrole" {
 		if isStaffMember(m.Author.ID, m.GuildID) {
 			if len(commandArgs) > 1 && commandArgs[1] != "" {
-				_, i := FindinArray(persistantData.PlayerRoles, commandArgs[1])
+				roleName := strings.Join(commandArgs[1:], " ")
+				_, i := FindinArray(persistantData.PlayerRoles, roleName)
 				if i == false {
 					g, err := DiscordSession.Guild(m.GuildID)
 					if err != nil {
-						fmt.Println(err)
+						log.Warnln("[messageCommand]: Command addrole errored with", err)
 						return
 					}
 					r := g.Roles
@@ -129,17 +128,17 @@ func messageCommand(m *discordgo.MessageCreate) {
 					for _, v := range r {
 						roles = AppendIfMissing(roles, v.Name)
 					}
-					_, roleExists := FindinArray(roles, commandArgs[1])
+					_, roleExists := FindinArray(roles, roleName)
 					if roleExists {
-						persistantData.PlayerRoles = append(persistantData.PlayerRoles, commandArgs[1])
+						persistantData.PlayerRoles = append(persistantData.PlayerRoles, roleName)
 						pdsaveData()
-						DiscordSendMessage("`Added role " + commandArgs[1] + " as avalable role`")
+						DiscordSendMessage("`Added role " + roleName + " as avalable role`")
 					} else {
-						DiscordSendMessage("`Role " + commandArgs[1] + " does not exist on discord." + "`")
+						DiscordSendMessage("`Role " + roleName + " does not exist on discord." + "`")
 
 					}
 				} else {
-					DiscordSendMessage("`Role " + commandArgs[1] + " already Exists`")
+					DiscordSendMessage("`Role " + roleName + " already Exists`")
 				}
 			} else {
 				DiscordSendMessage("`Role name Missing.`")
@@ -152,11 +151,12 @@ func messageCommand(m *discordgo.MessageCreate) {
 	if commandArgs[0] == "removerole" {
 		if isStaffMember(m.Author.ID, m.GuildID) {
 			if len(commandArgs) > 1 && commandArgs[1] != "" {
-				_, i := FindinArray(persistantData.PlayerRoles, commandArgs[1])
+				roleName := strings.Join(commandArgs[1:], " ")
+				_, i := FindinArray(persistantData.PlayerRoles, roleName)
 				if i == true {
 					g, err := DiscordSession.Guild(m.GuildID)
 					if err != nil {
-						fmt.Println(err)
+						log.Warnln("[messageCommand]: Command removerole errored with", err)
 						return
 					}
 					r := g.Roles
@@ -164,22 +164,22 @@ func messageCommand(m *discordgo.MessageCreate) {
 					for _, v := range r {
 						roles = AppendIfMissing(roles, v.Name)
 					}
-					_, roleExists := FindinArray(roles, commandArgs[1])
+					_, roleExists := FindinArray(roles, roleName)
 					if roleExists {
-						persistantData.PlayerRoles = RemoveEntryFromArray(persistantData.PlayerRoles, commandArgs[1])
+						persistantData.PlayerRoles = RemoveEntryFromArray(persistantData.PlayerRoles, roleName)
 						for n, r := range persistantData.Users {
 							if r == commandArgs[1] {
 								delete(persistantData.Users, n)
 							}
 						}
 						pdsaveData()
-						DiscordSendMessage("`Removed role " + commandArgs[1] + "`")
+						DiscordSendMessage("`Removed role " + roleName + "`")
 					} else {
-						DiscordSendMessage("`Role " + commandArgs[1] + " does not exist on discord." + "`")
+						DiscordSendMessage("`Role " + roleName + " does not exist on discord." + "`")
 
 					}
 				} else {
-					DiscordSendMessage("`Role " + commandArgs[1] + " does not Exists`")
+					DiscordSendMessage("`Role " + roleName + " does not Exists`")
 				}
 			} else {
 				DiscordSendMessage("`Role name Missing.`")
@@ -190,6 +190,7 @@ func messageCommand(m *discordgo.MessageCreate) {
 		return
 	}
 	if commandArgs[0] == "setrole" {
+		roleName := strings.Join(commandArgs[1:], " ")
 		var chatRoles, userRoles, validRoles []string
 		// Get all avalable PlayerRoles
 		for _, role := range persistantData.PlayerRoles {
@@ -209,20 +210,17 @@ func messageCommand(m *discordgo.MessageCreate) {
 			}
 		}
 		if len(commandArgs) > 1 {
-			_, f := FindinArray(validRoles, commandArgs[1])
+			_, f := FindinArray(validRoles, roleName)
 			if f {
 				if persistantData.Users == nil {
 					persistantData.Users = map[string]string{
-						m.Author.ID: commandArgs[1],
+						m.Author.ID: roleName,
 					}
 				}
-				persistantData.Users[m.Author.ID] = commandArgs[1]
+				persistantData.Users[m.Author.ID] = roleName
 				pdsaveData()
-				DiscordSendMessage("`Set role to " + commandArgs[1] + "`")
-			} else {
-				fmt.Println("You do not have access to this role.")
+				DiscordSendMessage("`Set role to " + roleName + "`")
 			}
-
 		} else {
 			var msg string
 			msg = msg + "You have the following roles avalable." + "\n" + "```" + "\n"
@@ -234,7 +232,6 @@ func messageCommand(m *discordgo.MessageCreate) {
 				msg = msg + "You current role is "
 				msg = msg + "`" + persistantData.Users[m.Author.ID] + "`"
 			}
-			fmt.Println(msg)
 			DiscordSendMessage(msg)
 		}
 	}
