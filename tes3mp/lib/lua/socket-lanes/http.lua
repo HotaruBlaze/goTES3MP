@@ -1,7 +1,4 @@
 -----------------------------------------------------------------------------
--- Full copy of the LuaSocket code, modified to include
--- https and http/https redirects, and Copas async enabled.
------------------------------------------------------------------------------
 -- HTTP/1.1 client support for the Lua language.
 -- LuaSocket toolkit.
 -- Author: Diego Nehab
@@ -10,35 +7,26 @@
 -----------------------------------------------------------------------------
 -- Declare module and import dependencies
 -------------------------------------------------------------------------------
-local socket = require("socket")
-local url = require("socket.url")
-local ltn12 = require("ltn12")
-local mime = require("mime")
+local socket = require("socket-lanes")
+local url = require("socket-lanes.url")
+local ltn12 = require("ltn12-lanes")
+local mime = require("mime-lanes")
 local string = require("string")
-local headers = require("socket.headers")
+local headers = require("socket-lanes.headers")
 local base = _G
 local table = require("table")
-local try = socket.try
-local copas = require("copas")
-copas.http = {}
-local _M = copas.http
+socket.http = {}
+local _M = socket.http
 
 -----------------------------------------------------------------------------
 -- Program constants
 -----------------------------------------------------------------------------
 -- connection timeout in seconds
-_M.TIMEOUT = 60
+TIMEOUT = 60
 -- default port for document retrieval
 _M.PORT = 80
 -- user agent field sent in request
 _M.USERAGENT = socket._VERSION
-
--- Default settings for SSL
-_M.SSLPORT = 443
-_M.SSLPROTOCOL = "tlsv1"
-_M.SSLOPTIONS  = "all"
-_M.SSLVERIFY   = "none"
-
 
 -----------------------------------------------------------------------------
 -- Reads MIME headers from a connection, unfolding where needed
@@ -88,7 +76,7 @@ socket.sourcet["http-chunked"] = function(sock, headers)
             -- was it the last chunk?
             if size > 0 then
                 -- if not, get chunk and skip terminating CRLF
-                local chunk, err = sock:receive(size)
+                local chunk, err, part = sock:receive(size)
                 if chunk then sock:receive() end
                 return chunk, err
             else
@@ -118,15 +106,15 @@ end
 -----------------------------------------------------------------------------
 local metat = { __index = {} }
 
-function _M.open(reqt)
-    -- create socket with user connect function
-    local c = socket.try(reqt:create())   -- method call, passing reqt table as self!
+function _M.open(host, port, create)
+    -- create socket with user connect function, or with default
+    local c = socket.try((create or socket.tcp)())
     local h = base.setmetatable({ c = c }, metat)
     -- create finalized try
     h.try = socket.newtry(function() h:close() end)
     -- set timeout before connecting
     h.try(c:settimeout(_M.TIMEOUT))
-    h.try(c:connect(reqt.host, reqt.port or _M.PORT))
+    h.try(c:connect(host, port or _M.PORT))
     -- here everything worked
     return h
 end
@@ -198,7 +186,7 @@ end
 local function adjusturi(reqt)
     local u = reqt
     -- if there is a proxy, we need the full url. otherwise, just a part.
-    if not reqt.proxy and not _M.PROXY then
+    if not reqt.proxy and not PROXY then
         u = {
            path = socket.try(reqt.path, "invalid path 'nil'"),
            params = reqt.params,
@@ -210,7 +198,7 @@ local function adjusturi(reqt)
 end
 
 local function adjustproxy(reqt)
-    local proxy = reqt.proxy or _M.PROXY
+    local proxy = reqt.proxy or PROXY
     if proxy then
         proxy = url.parse(proxy)
         return proxy.host, proxy.port or 3128
@@ -221,10 +209,9 @@ end
 
 local function adjustheaders(reqt)
     -- default headers
-    local host = string.gsub(reqt.authority, "^.-@", "")
     local lower = {
         ["user-agent"] = _M.USERAGENT,
-        ["host"] = host,
+        ["host"] = reqt.host,
         ["connection"] = "close, TE",
         ["te"] = "trailers"
     }
@@ -306,7 +293,7 @@ end
     -- we loop until we get what we want, or
     -- until we are sure there is no way to get it
     local nreqt = adjustrequest(reqt)
-    local h = _M.open(nreqt)
+    local h = _M.open(nreqt.host, nreqt.port, nreqt.create)
     -- send request line and headers
     h:sendrequestline(nreqt.method, nreqt.uri)
     h:sendheaders(nreqt.headers)
@@ -341,48 +328,12 @@ end
     return 1, code, headers, status
 end
 
--- Return a function which performs the SSL/TLS connection.
-local function tcp(params)
-   params = params or {}
-   -- Default settings
-   params.protocol = params.protocol or _M.SSLPROTOCOL
-   params.options = params.options or _M.SSLOPTIONS
-   params.verify = params.verify or _M.SSLVERIFY
-   params.mode = "client"   -- Force client mode
-   -- upvalue to track https -> http redirection
-   local washttps = false
-   -- 'create' function for LuaSocket
-   return function (reqt)
-      local u = url.parse(reqt.url)
-      if (reqt.scheme or u.scheme) == "https" then
-        -- https, provide an ssl wrapped socket
-        local conn = copas.wrap(socket.tcp(), params)
-        -- insert https default port, overriding http port inserted by LuaSocket
-        if not u.port then
-           u.port = _M.SSLPORT
-           reqt.url = url.build(u)
-           reqt.port = _M.SSLPORT 
-        end
-        washttps = true
-        return conn
-      else
-        -- regular http, needs just a socket...
-        if washttps and params.redirect ~= "all" then
-          try(nil, "Unallowed insecure redirect https to http")
-        end
-        return copas.wrap(socket.tcp())
-      end  
-   end
-end
-
--- parses a shorthand form into the advanced table form.
--- adds field `target` to the table. This will hold the return values.
-_M.parseRequest = function(u, b)
+local function srequest(u, b)
+    local t = {}
     local reqt = {
         url = u,
-        target = {},
+        sink = ltn12.sink.table(t)
     }
-    reqt.sink = ltn12.sink.table(reqt.target)
     if b then
         reqt.source = ltn12.source.string(b)
         reqt.headers = {
@@ -391,23 +342,13 @@ _M.parseRequest = function(u, b)
         }
         reqt.method = "POST"
     end
-    return reqt
+    local code, headers, status = socket.skip(1, trequest(reqt))
+    return table.concat(t), code, headers, status
 end
 
 _M.request = socket.protect(function(reqt, body)
-    if base.type(reqt) == "string" then 
-        reqt = _M.parseRequest(reqt, body)
-        local ok, code, headers, status = _M.request(reqt)
-
-        if ok then
-            return table.concat(reqt.target), code, headers, status
-        else
-            return nil, code
-        end
-    else
-        reqt.create = reqt.create or tcp(reqt)
-        return trequest(reqt)
-    end
+    if base.type(reqt) == "string" then return srequest(reqt, body)
+    else return trequest(reqt) end
 end)
 
 return _M

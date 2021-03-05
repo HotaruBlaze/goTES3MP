@@ -10,7 +10,7 @@
 local string = require("string")
 local base = _G
 local table = require("table")
-local socket = require("socket")
+local socket = require("socket-lanes")
 
 socket.url = {}
 local _M = socket.url

@@ -8,12 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type persistantDataStruct struct {
+type persistantServerDataStruct struct {
 	Users       map[string]string
 	PlayerRoles []string `json:"PlayerRoles"`
 }
 
-var persistantData persistantDataStruct
+var persistantData persistantServerDataStruct
 var persistantFilePath = "./goTES3MP/data.json"
 
 func pdloadData() {
@@ -29,8 +29,10 @@ func pdloadData() {
 	defer persistantDataFile.Close()
 
 	byteValue, _ := ioutil.ReadAll(persistantDataFile)
-	json.Unmarshal(byteValue, &persistantData)
-
+	err = json.Unmarshal(byteValue, &persistantData)
+	if err != nil {
+		log.Errorln("[pdloadData]", "Failed to Unmarshal Persistant Data, %v", err)
+	}
 }
 func pdsaveData() {
 	pd, err := json.Marshal(&persistantData)
@@ -38,5 +40,8 @@ func pdsaveData() {
 		log.Warnln("[pdsaveData]: Command removerole errored with", err)
 		return
 	}
-	ioutil.WriteFile(persistantFilePath, pd, os.ModePerm)
+	err = ioutil.WriteFile(persistantFilePath, pd, os.ModePerm)
+	if err != nil {
+		log.Errorln("[pdsaveData]", "Failed to save file: , %v", err)
+	}
 }

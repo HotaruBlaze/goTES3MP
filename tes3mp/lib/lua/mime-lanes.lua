@@ -8,8 +8,8 @@
 -- Declare module and import dependencies
 -----------------------------------------------------------------------------
 local base = _G
-local ltn12 = require("ltn12")
-local mime = require("mime.core")
+local ltn12 = require("ltn12-lanes")
+local mime = require("mime-lanes.core")
 local io = require("io")
 local string = require("string")
 local _M = mime
