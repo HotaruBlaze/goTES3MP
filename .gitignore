@@ -1,4 +1,5 @@
-logs/
+goTES3MP/logs/
 build/
-goTes3mp_config.json
+config.yaml
 goTES3MP/data.json
+.vscode/

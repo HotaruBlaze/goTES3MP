@@ -1,0 +1,25 @@
+name: Analyze
+
+on:
+  pull_request:
+    branches: [master]
+  release:
+    types: [published]
+    
+jobs:
+  analyze:
+    name: Go Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+        stable: true
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v2.3.0
+      with:
+        version: v1.34
+        args: --disable-all -E gosimple -E deadcode -E errcheck -E bodyclose -E dupl -E gosec 
+        skip-go-installation: true
