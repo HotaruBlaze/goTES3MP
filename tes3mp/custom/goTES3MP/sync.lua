@@ -29,7 +29,7 @@ Sync.SendSync = function(forceResync)
 end
 
 Sync.GotSync = function(ServerID, recievedSyncID)
-    if ServerID == goTES3MP.GetServerID() and recievedSyncID == goTES3MP.GetSyncID() then
+    if ServerID == goTES3MP.GetServerID() then
         WaitingForSync = false
     end
 end

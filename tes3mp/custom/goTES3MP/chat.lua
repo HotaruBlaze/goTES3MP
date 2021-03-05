@@ -17,7 +17,7 @@ customEventHooks.registerHandler("OnPlayerAuthentified", function(eventStatus, p
         data = {
             channel = GoTES3MP_DiscordChannel,
 			server = GoTES3MP_DiscordServer,
-			message = "**"..tes3mp.GetName(pid) .. " has connected".."**"
+			message = "**".."[TES3MP] "..tes3mp.GetName(pid) .. " has connected".."**"
         }
     }
 
@@ -33,7 +33,7 @@ customEventHooks.registerValidator("OnPlayerDisconnect", function(eventStatus, p
         data = {
             channel = GoTES3MP_DiscordChannel,
 			server = GoTES3MP_DiscordServer,
-			message = "**"..tes3mp.GetName(pid) .. " has disconnected".."**"
+			message = "**".."[TES3MP] "..tes3mp.GetName(pid) .. " has disconnected".."**"
         }
     }
     IrcBridge.SendSystemMessage(cjson.encode(messageJson))
