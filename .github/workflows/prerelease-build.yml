@@ -2,7 +2,7 @@ name: Build
 
 on:
   release:
-    types: [released]
+    types: [prereleased]
 
 jobs:
   build-linux:
@@ -24,6 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          prerelease: true
           files: build/goTES3MP-Linux
 
   build-windows:
@@ -45,6 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          prerelease: true
           files: build/goTES3MP-Windows.exe
 
   add-scripts:
@@ -64,4 +66,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          prerelease: true
           files: build/tes3mp-scripts.zip
