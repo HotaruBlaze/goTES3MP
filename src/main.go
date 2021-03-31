@@ -95,6 +95,9 @@ func main() {
 			commandStatus()
 		case "reloadirc":
 			commandIrcReconnect()
+		case "reloaddiscord":
+			color.HiBlack("Attempting to reload Discord")
+			InitDiscord()
 		case "exit", "quit", "stop":
 			color.HiBlack("Shutting down...")
 			commandShutdown()
