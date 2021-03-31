@@ -12,6 +12,7 @@ local cjson = require("cjson")
 local goTES3MP = require("custom.goTES3MP.main")
 local goTES3MPSync = require("custom.goTES3MP.sync")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
+local goTES3MPCommands = require("custom.goTES3MP.commands")
 
 local IrcBridge = {}
 
@@ -90,13 +91,12 @@ IrcBridge.RecvMessage = function()
                 if responce.Status == "Pong" and WaitingForSync then
                     goTES3MPSync.GotSync(responce.ServerID, responce.SyncID)
                 end
-                -- if responce.method == "Discord" or responce.method == "IRC" then
-                --     for pid, player in pairs(Players) do
-                --         if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
-                --             IrcBridge.ChatMessage(pid, responce)
-                --         end
-                --     end
-                -- end
+                if
+                    responce.method == "Command" and responce.data["replyChannel"] ~= nil and
+                        responce.data["Command"]
+                 then
+                    goTES3MPCommands.main(responce.data["Command"], responce.data["replyChannel"])
+                end
                 if responce.method == "DiscordChat" or responce.method == "IRC" then
                     for pid, player in pairs(Players) do
                         if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then

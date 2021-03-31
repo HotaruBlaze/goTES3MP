@@ -21,6 +21,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	if m.Content[:1] == viper.GetString("discord.commandprefix") && isStaffMember(m.Author.ID, m.GuildID) {
+		discordCommandHandler(s, m)
+		return
+	}
 	if m.ChannelID != viper.GetString("discord.serverchat") {
 		return
 	}
