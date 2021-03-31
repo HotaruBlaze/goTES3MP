@@ -10,12 +10,14 @@ local irc = require("irc")
 local cjson = require("cjson")
 
 local goTES3MP = require("custom.goTES3MP.main")
-local goTES3MPSync = require("custom/goTES3MP/sync")
+local goTES3MPSync = require("custom.goTES3MP.sync")
+local goTES3MPUtils = require("custom.goTES3MP.utils")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v4.0.0-goTES3MP"
+IrcBridge.version = "v4.0.5-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
+IrcBridge.debugMode = false
 
 IrcBridge.defaultConfig = {
     nick = "",
@@ -57,13 +59,15 @@ IRCTimerId = nil
 
 local s = irc.new {nick = nick}
 if password ~= "" then
-    s:connect({
-        host = server,
-        port = port,
-        password = password,
-        timeout = 120,
-        secure = false
-    })
+    s:connect(
+        {
+            host = server,
+            port = port,
+            password = password,
+            timeout = 120,
+            secure = false
+        }
+    )
 else
     s:connect(server, port)
 end
@@ -77,10 +81,13 @@ IrcBridge.RecvMessage = function()
         "OnChat",
         function(user, systemchannel, message)
             if message ~= lastMessage then
-                -- and tableHelper.getCount(Players) > 0
-                local responce = cjson.decode(message)
+                if IrcBridge.debugMode then
+                    print("IRCDebug: " .. message)
+                end
+
+                local responce = goTES3MPUtils.isJsonValidDecode(message)
                 -- Unfinishedd
-                if responce.Status == "Pong" and WaitingForSync then 
+                if responce.Status == "Pong" and WaitingForSync then
                     goTES3MPSync.GotSync(responce.ServerID, responce.SyncID)
                 end
                 -- if responce.method == "Discord" or responce.method == "IRC" then
@@ -90,7 +97,7 @@ IrcBridge.RecvMessage = function()
                 --         end
                 --     end
                 -- end
-                if responce.method == "DiscordChat" or responce.method == "IRC"then
+                if responce.method == "DiscordChat" or responce.method == "IRC" then
                     for pid, player in pairs(Players) do
                         if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
                             IrcBridge.ChatMessage(pid, responce)
@@ -106,63 +113,42 @@ IrcBridge.RecvMessage = function()
 end
 
 IrcBridge.ChatMessage = function(pid, responce)
-    tes3mp.LogMessage(enumerations.log.INFO, "Got ChatMessage!")
-
     local wherefrom = ""
     if responce.method == "DiscordChat" then
         wherefrom = discordColor .. "[" .. responce.source .. "]" .. color.Default
     elseif responce.method == "IRC" then
         wherefrom = ircColor .. "[" .. responce.source .. "]" .. color.Default
-    else 
+    else
         wherefrom = color.Default .. "[" .. responce.source .. "]" .. color.Default
     end
 
     if responce.data["RoleColor"] ~= "" and responce.data["RoleColor"] ~= "" then
-        local staffRole = "#"..responce.data["RoleColor"] .. "[" .. responce.data["RoleName"] .. "]" .. color.Default
+        local staffRole = "#" .. responce.data["RoleColor"] .. "[" .. responce.data["RoleName"] .. "]" .. color.Default
         tes3mp.SendMessage(
             pid,
-            wherefrom .." ".. staffRole .." "..responce.data["User"] .. ": " ..  responce.data["Message"] .. "\n",
+            wherefrom .. " " .. staffRole .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n",
             false
         )
-    else 
+    else
         tes3mp.SendMessage(
             pid,
-            wherefrom  .." "..responce.data["User"] .. ": " .. responce.data["Message"] .. "\n",
+            wherefrom .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n",
             false
         )
     end
 end
--- IrcBridge.ServerCommand = function (responce)
 
-
--- end
 IrcBridge.SendSystemMessage = function(message)
-    s:sendChat(systemchannel, message)
+    if message ~= lastMessage then
+        s:sendChat(systemchannel, message)
+        lastMessage = message
+    end
 end
 
 function OnIRCUpdate()
     IrcBridge.RecvMessage()
     s:think()
 end
-
--- customEventHooks.registerValidator(
---     "OnPlayerSendMessage",
---     function(eventStatus, pid, message)
---         local messageJson = {
---             user = tes3mp.GetName(pid),
---             pid = pid,
---             method = "Chat",
---             responce = message
---         }
-
---         if message:sub(1, 1) == "/" then
--- 		    return
---         else
---             responce = cjson.encode(messageJson)
---             IrcBridge.SendSystemMessage(responce)
---         end
---     end
--- )
 
 customEventHooks.registerValidator(
     "OnServerInit",

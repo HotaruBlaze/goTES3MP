@@ -53,6 +53,8 @@ func processRelayMessage(s baseResponce) bool {
 			checkError("DiscordChat", err)
 			sendResponce := bytes.NewBuffer(jsonResponce).String()
 			IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
+			usrMsg := res.Data["User"] + ": " + res.Data["Message"]
+			logRelayedMessages("Discord", usrMsg)
 		case "Discord":
 			log.Println("Replaced with rawDiscord, Depreciation of this method is planned")
 			return false
@@ -62,12 +64,19 @@ func processRelayMessage(s baseResponce) bool {
 			m.Server = res.Data["server"]
 			m.Message = res.Data["message"]
 			status := rawDiscordMessage(m)
+			logRelayedMessages("TES3MP", m.Message)
 			return status
 		default:
 			log.Println(res.Method, " is an unknown method.")
 		}
 	}
 	return false
+}
+
+func logRelayedMessages(server string, message string) {
+	if server != "" && message != "" {
+		log.Println("<" + server + "> " + message)
+	}
 }
 
 func processRelayMessageSanityCheck(Rmsg *baseResponce) error {

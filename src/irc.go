@@ -51,7 +51,8 @@ func InitIRC() {
 				var baseMsg baseResponce
 				err := json.Unmarshal([]byte(event.Message()), &baseMsg)
 				if err != nil {
-					checkError("AddCallback: PRIVMSG", err)
+					checkError("[IRC:AddCallback]: PRIVMSG", err)
+					return
 				}
 				processRelayMessage(baseMsg)
 			}

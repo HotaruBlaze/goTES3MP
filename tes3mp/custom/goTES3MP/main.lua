@@ -7,7 +7,6 @@ WaitingForSync = false
 local goTES3MP = {}
 local TES3MPOnline = false 
 
-
 -- Modules
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPSync = require("custom.goTES3MP.sync")
@@ -69,7 +68,10 @@ customEventHooks.registerHandler("OnServerInit", function(eventStatus, pid)
         }
     }
     if TES3MPOnline == false then
-        IrcBridge.SendSystemMessage(cjson.encode(messageJson))
+        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+        if responce ~= nil then
+            IrcBridge.SendSystemMessage(responce)
+        end
         TES3MPOnline = true
     end
 end)
@@ -86,7 +88,10 @@ customEventHooks.registerValidator("OnServerExit", function(eventStatus, pid)
 			message = "**".."[TES3MP] Server is offline. :warning:".."**"
         }
     }
-    IrcBridge.SendSystemMessage(cjson.encode(messageJson))
+    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+    if responce ~= nil then
+        IrcBridge.SendSystemMessage(responce)
+    end
 end)
 
 
