@@ -95,7 +95,7 @@ IrcBridge.RecvMessage = function()
                     responce.method == "Command" and responce.data["replyChannel"] ~= nil and
                         responce.data["Command"]
                  then
-                    goTES3MPCommands.main(responce.data["Command"], responce.data["replyChannel"])
+                    goTES3MPCommands.main(responce.data["TargetPlayer"],responce.data["Command"],responce.data["CommandArgs"], responce.data["replyChannel"])
                 end
                 if responce.method == "DiscordChat" or responce.method == "IRC" then
                     for pid, player in pairs(Players) do
