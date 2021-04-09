@@ -1,7 +1,7 @@
 local commands = {}
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 
-commands.kickPlayer = function(player,discordReplyChannel)
+commands.kickPlayer = function(player, discordReplyChannel)
     targetPid = commands.getPlayerPID(player)
     if targetPid ~= nil then
         tes3mp.SendMessage(
@@ -14,10 +14,10 @@ commands.kickPlayer = function(player,discordReplyChannel)
     end
 end
 
-commands.runConsole = function(player, consoleCommand, discordReplyChannel)
+commands.runConsole = function(player, commandArgs, discordReplyChannel)
     targetPid = commands.getPlayerPID(player)
     if targetPid ~= nil then
-        logicHandler.RunConsoleCommandOnPlayer(targetPid, consoleCommand)
+        logicHandler.RunConsoleCommandOnPlayer(targetPid, commandArgs)
         commands.SendResponce(discordReplyChannel)
     end
 end
@@ -36,23 +36,34 @@ commands.resetKills = function(discordReplyChannel)
     tes3mp.LogMessage(enumerations.log.INFO, "All the kill counts for creatures and NPCs have been reset.")
     commands.SendResponce(discordReplyChannel)
 end
-
-commands.main = function(str, discordReplyChannel)
-    tes3mp.LogMessage(enumerations.log.INFO, "Recieved "..'"'..str..'"'.." from discord.")
-    cmdChunks = {}
-    for substring in str:gmatch("%S+") do
-        table.insert(cmdChunks, substring)
+commands.main = function(player, command, commandArgs, discordReplyChannel)
+    if player ~= nil then
+        if string.byte(player:sub(1,1)) == 34 then
+            pLength = string.len(player)
+            player = player:sub(2, pLength - 1)
+        end
+        if commandArgs ~= nil then
+            tes3mp.LogMessage(
+                enumerations.log.INFO,
+                "[Discord]: " ..
+                    "Running " ..
+                        command .. ' on player "' .. player .. '"' .. ' with Arguements "' .. commandArgs .. '"'
+            )
+        else
+            tes3mp.LogMessage(
+                enumerations.log.INFO,
+                "[Discord]: " .. "Running " .. command .. ' on player "' .. player .. '"'
+            )
+        end
+    else
+        tes3mp.LogMessage(enumerations.log.INFO, "[Discord]: " .. "Running " .. command)
     end
-
-    command = string.lower(cmdChunks[1])
 
     if command == "kickplayer" then
-        print(tableHelper.concatenateFromIndex(cmdChunks, 2))
-        commands.kickPlayer(tableHelper.concatenateFromIndex(cmdChunks, 2), discordReplyChannel)
+        commands.kickPlayer(player, discordReplyChannel)
     end
     if command == "runconsole" then
-        print(tableHelper.concatenateFromIndex(cmdChunks, 3))
-        commands.runConsole(cmdChunks[2], tableHelper.concatenateFromIndex(cmdChunks, 3), discordReplyChannel)
+        commands.runConsole(player, commandArgs, discordReplyChannel)
     end
     if command == "resetkills" then
         commands.resetKills(discordReplyChannel)
@@ -60,8 +71,11 @@ commands.main = function(str, discordReplyChannel)
     if command == "help" then
         local commandList = ""
         commandList = commandList .. "```" .. "\n"
-        commandList = commandList .. "!kickplayer (PlayerName): Kicks the specified player from the tes3mp server." .. "\n"
-        commandList = commandList .. "!runconsole (PlayerName) (Console Command): Run a console command on a specific Player." .. "\n"
+        commandList =
+            commandList .. "!kickplayer (PlayerName): Kicks the specified player from the tes3mp server." .. "\n"
+        commandList =
+            commandList ..
+            "!runconsole (PlayerName) (Console Command): Run a console command on a specific Player." .. "\n"
         commandList = commandList .. "!resetkills: Reset player kills." .. "\n"
         commandList = commandList .. "```" .. "\n"
 
@@ -76,13 +90,12 @@ commands.main = function(str, discordReplyChannel)
                 message = commandList
             }
         }
-    
+
         local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
         if responce ~= nil then
             IrcBridge.SendSystemMessage(responce)
         end
     end
-
 end
 
 commands.SendResponce = function(discordReplyChannel)
