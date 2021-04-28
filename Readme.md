@@ -4,8 +4,7 @@ This was an attempt at having an aditional layer ontop of tes3mp, however this p
 
 # Known Issues
 <!-- * TES3MP does not shutdown correctly most of the time with SIGINT, or closing the application, It's recommended to use another script for this, such as [ShutdownServer](https://github.com/tes3mp-scripts/ShutdownServer). -->
-<!-- * Sometimes server output from TES3MP will no longer be printed into the terminal, The reason is currently unclear. -->
-<!-- * Sometimes goTES3MP loses connection to Discord, this usually fixes itself after a couple of minutes, if not try restarting goTES3MP.  -->
+<!-- * Sometimes goTES3MP loses connection to Discord, this usually fixes itself after a couple of minutes, if not try running the "reloaddiscord" command.  -->
 * Mentioning Channel names and emotes will be glitched/formatted incorrectly, This is known and a fix is being looked for.
 
 # Goal
@@ -14,7 +13,7 @@ This was an attempt at having an aditional layer ontop of tes3mp, however this p
 - [X] Show CurrentPlayers/MaxPlayers as Discord bot status.
 
 # Requirements
-- An IRC Server, I recommend [oragono](https://github.com/oragono/oragono)
+- An IRC Server, I recommend my personal fork of [oragono](https://github.com/oragono/oragono) found [here](https://github.com/HotaruBlaze/oragono-tes3mp)
 - [Datamanager](https://github.com/tes3mp-scripts/DataManager) for TES3MP
 - *[cjson](https://github.com/TES3MP/lua-cjson) (Included in tes3mp-scripts.zip)
 # Install Instructions
