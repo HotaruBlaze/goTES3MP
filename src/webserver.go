@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -11,9 +12,14 @@ import (
 
 // InitWebserver : Initalize webserver
 func InitWebserver() {
-	webport := viper.GetString("webserver.port")
 	http.HandleFunc("/status", status)
-	http.ListenAndServe(webport, nil)
+	err := http.ListenAndServe(viper.GetString("webserver.port"), nil)
+	if err != nil {
+		log.Errorln("[Webserver]", "Unable to start webserver, %v", err)
+	}
+	time.Sleep(60 * time.Microsecond)
+	log.Infoln("[Webserver] Started on port", viper.GetString("webserver.port"))
+
 }
 
 // status : Print current ServerStatus struct as json

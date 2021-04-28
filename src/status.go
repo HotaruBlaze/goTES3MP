@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"strconv"
+	"strings"
 	"time"
 
-	"github.com/spf13/viper"
+	color "github.com/fatih/color"
 )
 
 // ServerStatus struct
@@ -23,21 +23,14 @@ type ServerStatus struct {
 func UpdateStatusTimer() {
 	getServerMaxPlayers()
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(20 * time.Second)
 		_ = UpdateStatus()
 	}
 
 }
-func getServerMaxPlayers() {
-	tes3mpPath := viper.GetString("tes3mp.basedir")
 
-	props, err := ReadPropertiesFile(tes3mpPath + "/tes3mp-server-default.cfg")
-	if err != nil {
-		log.Println("Error while reading properties file")
-	}
-	if i, err := strconv.Atoi(props["maximumPlayers"]); err == nil {
-		MaxPlayers = i
-	}
+func getServerMaxPlayers() {
+	MaxPlayers = 0
 }
 
 // UpdateStatus for keeping server stats synced
@@ -56,4 +49,15 @@ func UpdateStatus() (s []byte) {
 		log.Println(err)
 	}
 	return jsonData
+}
+func getStatus(firstLaunch bool, showModules bool) {
+	if firstLaunch {
+		color.HiBlack(strings.Repeat("=", 32))
+	}
+	color.HiBlack("goTES3MP: " + Build)
+	color.HiBlack("Commit: " + GitCommit)
+	color.HiBlack("Github: " + "https://github.com/hotarublaze/goTES3MP" + "\n")
+	if firstLaunch {
+		color.HiBlack(strings.Repeat("=", 32))
+	}
 }
