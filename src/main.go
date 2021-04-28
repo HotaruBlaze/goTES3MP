@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
+
 	"time"
 
-	"github.com/enriquebris/goconcurrentqueue"
+	color "github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -18,10 +19,8 @@ import (
 // GitCommit used to build
 var GitCommit string
 
-var stdin io.WriteCloser
-
 // Build version
-var Build = "v0.0.0-Debug"
+var Build = "0.0.0-Debug"
 
 // ServerRunning - TES3MP server Status
 var ServerRunning bool
@@ -38,25 +37,33 @@ var TES3MPVersion = ""
 // Players :  List is current Players Connected
 var Players = []string{}
 
-// TES3MPBuild : Linux/Windows (32-bit/64-Bit)
-var TES3MPBuild = ""
-
 var tes3mpLogMessage = "[goTES3MP]"
 
 // MultiWrite : Prints to logfile and os.Stdout
 var MultiWrite io.Writer
 
-func main() {
-	queue := goconcurrentqueue.NewFIFO()
-	printBuildInfo()
+func init() {
+	if len(GitCommit) == 0 {
+		GitCommit = "None"
+	}
 	initLogger()
 	LoadConfig()
 	pdloadData()
+}
+func main() {
 	enableDebug := viper.GetBool("debug")
 	if enableDebug {
 		log.Warnln("Debug mode is enabled")
 		log.SetLevel(log.DebugLevel)
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Infoln("Preforming clean shutdown...")
+		commandShutdown()
+	}()
 	if viper.GetBool("webserver.enable") {
 		go InitWebserver()
 	}
@@ -69,8 +76,35 @@ func main() {
 		go MemoryDebugInfo()
 	}
 
-	go queueProcessor(queue)
-	LaunchTes3mp(queue)
+	reader := bufio.NewReader(os.Stdin)
+
+	getStatus(true, false)
+	for {
+		time.Sleep(2 * 100 * time.Millisecond)
+		// TODO: This should be tweaked so ">" is always at the bottom.
+		fmt.Print("> ")
+		command, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		command = strings.TrimSuffix(command, "\n")
+
+		args := strings.Split(command, " ")
+		switch strings.ToLower(args[0]) {
+		case "status":
+			commandStatus()
+		case "reloadirc":
+			commandIrcReconnect()
+		case "reloaddiscord":
+			color.HiBlack("Attempting to reload Discord")
+			InitDiscord()
+		case "exit", "quit", "stop":
+			color.HiBlack("Shutting down...")
+			commandShutdown()
+		default:
+			color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
+		}
+	}
 }
 
 func initLogger() {
@@ -79,7 +113,10 @@ func initLogger() {
 	logfileName := ProgramDirectory + "goTES3MP-" + dt.Format("02-01-2006-15_04_05") + ".log"
 
 	if _, err := os.Stat(ProgramDirectory); os.IsNotExist(err) {
-		os.MkdirAll(ProgramDirectory, 0700)
+		err = os.MkdirAll(ProgramDirectory, 0700)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	logfile, err := os.OpenFile(logfileName, os.O_CREATE|os.O_WRONLY, 0644)
@@ -89,83 +126,6 @@ func initLogger() {
 
 	MultiWrite = io.MultiWriter(os.Stdout, logfile)
 	log.SetOutput(MultiWrite)
-	if viper.GetBool("debug") {
-		println("DEBUG IS ON")
-	}
+
 	log.SetLevel(log.InfoLevel)
-	if Build != "" && GitCommit != "" {
-		log.Infoln("goTES3MP", "Build:", Build+", "+"Commit:", GitCommit)
-	} else {
-		log.Infoln("goTES3MP", "Build:", Build+", "+"Commit:", "MISSING")
-	}
-}
-
-func printBuildInfo() {
-	fmt.Println("================================")
-	fmt.Println("goTES3MP")
-	fmt.Println("Build:", Build)
-	fmt.Println("Commit:", GitCommit)
-	fmt.Println("Github:", "https://github.com/hotarublaze/goTES3MP")
-	fmt.Println("================================")
-
-}
-
-// LaunchTes3mp : Start and initialize TES3MP
-func LaunchTes3mp(queue *goconcurrentqueue.FIFO) {
-	tes3mpPath := viper.GetString("tes3mp.basedir")
-
-	tes3mpBinary := "/tes3mp-server"
-
-	cmd := exec.Command(tes3mpPath + tes3mpBinary)
-
-	stdin, _ = cmd.StdinPipe()
-	stdout, _ := cmd.StdoutPipe()
-
-	startErr := cmd.Start()
-	if startErr != nil {
-		log.Fatalf("cmd.Run() failed with '%s'\n", startErr)
-	}
-
-	//// Does not seem to shutdown tes3mp correctly
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		log.Infoln("Recieved Signal to exit, Exiting and notifying discord")
-		stdin.Write([]byte("\n"))
-
-	}()
-	////
-
-	outScanner := bufio.NewScanner(stdout)
-	for outScanner.Scan() {
-		queue.Enqueue(outScanner.Text())
-	}
-}
-func queueProcessor(queue *goconcurrentqueue.FIFO) {
-	var count uint8
-	count = 0
-	for {
-		str, err := queue.DequeueOrWaitForNextElement()
-
-		switch err {
-		case nil:
-			tes3mpOutputHandler(str.(string))
-			switch count {
-			case 0:
-				break
-			default:
-				count = 0
-			}
-		default:
-			log.Warnln("[queueProcessor]: error", err)
-			count++
-			time.Sleep(1 * time.Minute)
-			switch count {
-			case 10:
-				log.Errorln("[queueProcessor]: Errored", string(count), "times and was killed.")
-				return
-			}
-		}
-	}
 }

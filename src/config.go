@@ -3,24 +3,23 @@ package main
 import (
 	"os"
 
+	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 // LoadConfig loads json config file
 func LoadConfig() (ConfigLoaded bool) {
-	var configPath = "./goTes3mp_config.json"
-	viper.SetConfigName("goTes3mp_config")
-	viper.SetConfigType("json")
-	viper.AddConfigPath("./goTES3MP")
+	var configPath = "./config.yaml"
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
 	viper.SetDefault("webserver.enable", false)
 	viper.SetDefault("webserver.port", ":8080")
 
-	viper.SetDefault("tes3mp.baseDir", ".")
+	viper.SetDefault("tes3mp.serverid", "")
 	viper.SetDefault("debug", false)
-	viper.SetDefault("serveroutput", true)
 	viper.SetDefault("discord.commandPrefix", "!")
 	viper.SetDefault("printMemoryInfo", false)
 
@@ -43,15 +42,21 @@ func LoadConfig() (ConfigLoaded bool) {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			viper.WriteConfigAs(configPath)
+			err := viper.WriteConfigAs(configPath)
+			if err != nil {
+				log.Errorln("[Config]", "Failed to write Config: ", err)
+			}
 			log.Infoln("[Viper]", "Created default config")
 			os.Exit(1)
 		} else {
-			log.Errorf("[Viper]", "Fatal error reading config file: %s \n", err)
+			log.Errorf("[Viper]", "Fatal error reading config file: %v", err)
 			panic(1)
 		}
 	}
-	log.Println("[Viper]", "Successfully loaded config")
-
+	log.Info("[Viper]", "Successfully loaded config")
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		log.Info("[Viper] Reloaded Configuration file")
+	})
 	return ConfigLoaded
 }
