@@ -81,6 +81,14 @@ func bToMb(b uint64) uint64 {
 	return b / 1024 / 1024
 }
 
+// filterDiscordEmotes : Formats Discord Emotes Correctly
+func filterDiscordEmotes(str string) string {
+	re := regexp.MustCompile(`<:(\S+):\d+>`)
+	filteredString := re.ReplaceAllString(str, `:$1:`)
+
+	return filteredString
+}
+
 // MemoryDebugInfo : Print current memory and GC cycles, Used for monitoring for memory leaks
 func MemoryDebugInfo() {
 	printMemUsage()
