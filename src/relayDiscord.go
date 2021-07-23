@@ -43,6 +43,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	} else {
 		message = m.Content
 	}
+
+	// Convert <:example:868167672758693909> to :example:
+	message = filterDiscordEmotes(message)
+
 	guildMember, err := s.GuildMember(m.GuildID, m.Message.Author.ID)
 	checkError("[RelayDiscord]: guildMember ", err)
 	hasNickname := guildMember.Nick
