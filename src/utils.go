@@ -34,7 +34,7 @@ import (
 // }
 
 func toHexInt(n *big.Int) string {
-	return fmt.Sprintf("%x", n) // or %X or upper case
+	return fmt.Sprintf("%06X", n) // or %X or upper case
 }
 
 // FindinArray : Search String array for a value
