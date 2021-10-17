@@ -3,7 +3,6 @@ package main
 import (
 	"math/big"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -105,10 +104,8 @@ func getDiscordRoles(UserID string, GuildID string) []discordRole {
 		if err != nil {
 			log.Errorln("getDiscordRoles Failed to get user roles from discord server.")
 		}
-		color := strings.ToUpper(
-			toHexInt(
-				big.NewInt(int64(role.Color)),
-			),
+		color := toHexInt(
+			big.NewInt(int64(role.Color)),
 		)
 		r := discordRole{
 			Position: role.Position,
