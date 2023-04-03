@@ -16,7 +16,8 @@ This was an attempt at having an aditional layer ontop of tes3mp, however this p
 - An IRC Server, I recommend my personal fork of [oragono](https://github.com/oragono/oragono) found [here](https://github.com/HotaruBlaze/oragono-tes3mp)
 - [Datamanager](https://github.com/tes3mp-scripts/DataManager) for TES3MP
 - *[cjson](https://github.com/TES3MP/lua-cjson) (Included in tes3mp-scripts.zip)
-# Install Instructions
+
+# Install Instructions - Standalone
 1. Download the latest build with accompanying tes3mp-scripts.zip 
 2. Extract and copy the custom and lib folders to `server` folder.
 3. Add the following to your server/customScripts.lua file, making sure DataManager is above the following
@@ -26,3 +27,35 @@ goTES3MP = require("custom/goTES3MP/main")
 ```
 4. Download and place the correct `goTES3MP` binary for your platform
 5. Run the binary to generate the default configuration file(`config.yaml`)
+
+# Install Instructions - Docker-Compose
+```yml
+version: "3"
+services:
+  irc-server:
+    image: mrflutters/oragono:tes3mp-fork
+    ports:
+      - 172.17.0.1:6667:6667 #Plaintext
+    restart: unless-stopped
+    volumes:
+        - irc_data:/ircd
+        - ./oragono/ircd.yaml:/ircd/ircd.yaml
+        - ./oragono/fullchain.pem:/ircd/fullchain.pem
+        - ./oragono/privkey.pem:/ircd/privkey.pem
+    networks:
+      - relay-net
+    container_name: irc-server
+
+  gotes3mp:
+    image: 'ghcr.io/hotarublaze/gotes3mp:v0.3'
+    volumes:
+      - './logs:/app/logs'
+      - './config.yaml:/app/config.yaml'
+    networks:
+      - relay-net
+      
+networks:
+  relay-net:
+volumes:
+  irc_data:
+```
