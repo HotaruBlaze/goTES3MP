@@ -11,6 +11,7 @@ local TES3MPOnline = false
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPSync = require("custom.goTES3MP.sync")
 local goTES3MPChat = require("custom.goTES3MP.chat")
+local goTES3MPVPNCheck = require("custom.goTES3MP.vpnChecker")
 
 goTES3MP.defaultConfig = {
     serverid = "",

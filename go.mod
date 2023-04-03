@@ -1,27 +1,35 @@
 module github.com/hotarublaze/gotes3mp
 
-go 1.13
+go 1.20
 
 require (
-	github.com/bwmarrin/discordgo v0.23.2
-	github.com/fatih/color v1.10.0
-	github.com/fsnotify/fsnotify v1.4.9
-	github.com/magefile/mage v1.11.0 // indirect
-	github.com/magiconair/properties v1.8.4 // indirect
-	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/pelletier/go-toml v1.8.1 // indirect
-	github.com/sirupsen/logrus v1.8.0
-	github.com/spf13/afero v1.5.1 // indirect
-	github.com/spf13/cast v1.3.1 // indirect
+	github.com/bwmarrin/discordgo v0.27.1
+	github.com/fatih/color v1.15.0
+	github.com/fsnotify/fsnotify v1.6.0
+	github.com/sirupsen/logrus v1.9.0
+	github.com/spf13/viper v1.15.0
+	github.com/thoj/go-ircevent v0.0.0-20210723090443-73e444401d64
+	github.com/tidwall/pretty v1.2.1
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
+)
+
+require (
+	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
+	github.com/spf13/afero v1.9.5 // indirect
+	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.6.1 // indirect
-	github.com/thoj/go-ircevent v0.0.0-20190807115034-8e7ce4b5a1eb
-	github.com/tidwall/pretty v1.1.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/sys v0.0.0-20210305034016-7844c3c200c3 // indirect
-	golang.org/x/text v0.3.5 // indirect
-	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	github.com/subosito/gotenv v1.4.2 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

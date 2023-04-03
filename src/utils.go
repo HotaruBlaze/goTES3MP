@@ -11,15 +11,15 @@ import (
 )
 
 // AppendIfMissing : Appends string if missing from array.
-// func AppendIfMissing(slice []string, i string) []string {
-// 	currentSlice := slice
-// 	for _, ele := range currentSlice {
-// 		if ele == i {
-// 			return slice
-// 		}
-// 	}
-// 	return append(slice, i)
-// }
+func AppendIfMissing(slice []string, i string) []string {
+	currentSlice := slice
+	for _, ele := range currentSlice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
 
 // // RemoveEntryFromArray : Remove Entry from Array.
 // func RemoveEntryFromArray(array []string, remove string) []string {

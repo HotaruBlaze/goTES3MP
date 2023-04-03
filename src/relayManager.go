@@ -66,6 +66,23 @@ func processRelayMessage(s baseResponce) bool {
 			status := rawDiscordMessage(m)
 			logRelayedMessages("TES3MP", m.Message)
 			return status
+		case "VPNCheck":
+			var m rawDiscordStruct
+			m.Channel = res.Data["channel"]
+			m.Server = res.Data["server"]
+			m.Message = res.Data["message"]
+			blockLevel := checkPlayerIP(m.Message)
+			if blockLevel == 1 {
+				log.Println("[VPNCheck]:", m.Message, "has been kicked.")
+				res.Data["kickPlayer"] = "yes"
+			} else {
+				log.Println("[VPNCheck]:", m.Message, "is not suspected to be using a VPN.")
+				res.Data["kickPlayer"] = "no"
+			}
+			jsonResponce, err := json.Marshal(res)
+			checkError("VPNCheck", err)
+			sendResponce := bytes.NewBuffer(jsonResponce).String()
+			IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
 		default:
 			log.Println(res.Method, " is an unknown method.")
 		}

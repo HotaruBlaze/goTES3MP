@@ -87,9 +87,9 @@ func main() {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		command = strings.TrimSuffix(command, "\n")
-
+		command = strings.TrimRight(command, "\r\n")
 		args := strings.Split(command, " ")
+
 		switch strings.ToLower(args[0]) {
 		case "status":
 			commandStatus()
