@@ -22,6 +22,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("discord.commandPrefix", "!")
 	viper.SetDefault("printMemoryInfo", false)
+	viper.SetDefault("enableConsoleCommands", true)
 
 	viper.SetDefault("irc.enableChatChannel", false)
 	viper.SetDefault("irc.server", "127.0.0.1")
