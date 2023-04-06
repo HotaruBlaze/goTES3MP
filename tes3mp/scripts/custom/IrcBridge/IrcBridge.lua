@@ -107,9 +107,9 @@ IrcBridge.RecvMessage = function()
                 if responce.method == "VPNCheck" then
                     if responce.data["kickPlayer"] ~= nil and responce.data["kickPlayer"] == "yes" then
                         pid = responce.data["playerpid"]
-                        if Players[pid].data.login.name ~= nil then
-                            playerName = Players[pid].data.login.name
-                            tes3mp.SendMessage(pid, playerName .. " was kicked for trying to use a VPN.", true, false)
+                        if tes3mp.GetName(pid) ~= nil then
+                            playerName = tes3mp.GetName(pid)
+                            tes3mp.SendMessage(pid, playerName .. " was kicked for trying to use a VPN.\n", true, false)
                             tes3mp.Kick(pid)
 
                             local messageJson = {
