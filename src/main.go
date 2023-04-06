@@ -83,11 +83,12 @@ func main() {
 		time.Sleep(2 * 100 * time.Millisecond)
 		// TODO: This should be tweaked so ">" is always at the bottom.
 		fmt.Print("> ")
+
 		command, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		command = strings.TrimRight(command, "\r\n")
+		command = strings.TrimSuffix(command, "\n")
 		args := strings.Split(command, " ")
 
 		switch strings.ToLower(args[0]) {
