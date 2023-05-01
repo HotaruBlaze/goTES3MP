@@ -22,4 +22,3 @@ jobs:
       with:
         version: v1.34
         args: --disable-all -E gosimple -E deadcode -E errcheck -E bodyclose -E dupl -E gosec 
-        skip-go-installation: true
