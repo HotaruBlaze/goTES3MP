@@ -81,36 +81,28 @@ func main() {
 	getStatus(true, false)
 	for {
 		time.Sleep(2 * 100 * time.Millisecond)
+		// TODO: This should be tweaked so ">" is always at the bottom.
+		fmt.Print("> ")
+		command, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		command = strings.TrimRight(command, "\r\n")
+		args := strings.Split(command, " ")
 
-		// in Some instances, os.Stdin isnt usable with docker, so lets check if the string is greater than 0.
-		// Also lets just add a override for sanity sake.
-		if viper.GetBool("enableConsoleCommands") {
-			// TODO: This should be tweaked so ">" is always at the bottom.
-			fmt.Print("> ")
-
-			command, err := reader.ReadString('\n')
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			command = strings.TrimSuffix(command, "\n")
-			if len(command) != 0 {
-				args := strings.Split(command, " ")
-
-				switch strings.ToLower(args[0]) {
-				case "status":
-					commandStatus()
-				case "reloadirc":
-					commandIrcReconnect()
-				case "reloaddiscord":
-					color.HiBlack("Attempting to reload Discord")
-					InitDiscord()
-				case "exit", "quit", "stop":
-					color.HiBlack("Shutting down...")
-					commandShutdown()
-				default:
-					color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
-				}
-			}
+		switch strings.ToLower(args[0]) {
+		case "status":
+			commandStatus()
+		case "reloadirc":
+			commandIrcReconnect()
+		case "reloaddiscord":
+			color.HiBlack("Attempting to reload Discord")
+			InitDiscord()
+		case "exit", "quit", "stop":
+			color.HiBlack("Shutting down...")
+			commandShutdown()
+		default:
+			color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
 		}
 	}
 }
