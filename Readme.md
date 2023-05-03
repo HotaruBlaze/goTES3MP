@@ -47,7 +47,7 @@ services:
     container_name: irc-server
 
   gotes3mp:
-    image: 'ghcr.io/hotarublaze/gotes3mp:v0.3'
+    image: 'ghcr.io/hotarublaze/gotes3mp:v0.3.4'
     volumes:
       - './logs:/app/logs'
       - './config.yaml:/app/config.yaml'
