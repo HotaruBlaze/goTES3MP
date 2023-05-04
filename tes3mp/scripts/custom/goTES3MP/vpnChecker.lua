@@ -1,5 +1,6 @@
 local goTES3MPVPNChecker = {}
 local cjson = require("cjson")
+local goTES3MPUtils = require("custom.goTES3MP.utils")
 
 customEventHooks.registerValidator(
     "OnServerPostInit",
@@ -8,10 +9,9 @@ customEventHooks.registerValidator(
     end
 )
 
-
 -- Send IP to goTES3MP 
 customEventHooks.registerHandler(
-    "OnPlayerConnected",
+    "OnPlayerConnect",
     function(eventStatus, pid)
 
         local IP = tes3mp.GetIP(pid)
@@ -23,8 +23,8 @@ customEventHooks.registerHandler(
             data = {
                 channel = GoTES3MP_DiscordChannel,
                 server = GoTES3MP_DiscordServer,
-                message = IP
-                playerpid = pid
+                message = IP,
+                playerpid = tostring(pid)
             }
         }
 
