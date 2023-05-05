@@ -31,6 +31,9 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("irc.chatchannel", "#goTES3MP-Chat")
 	viper.SetDefault("irc.pass", "")
 
+	viper.SetDefault("vpn.iphub_apikey", "")
+	viper.SetDefault("vpn.ipqualityscore_apikey", "")
+
 	viper.SetDefault("discord.enableCommands", true)
 	viper.SetDefault("discord.boldPlayerNames", false)
 	viper.SetDefault("discord.enable", false)

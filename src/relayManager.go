@@ -71,8 +71,8 @@ func processRelayMessage(s baseResponce) bool {
 			m.Channel = res.Data["channel"]
 			m.Server = res.Data["server"]
 			m.Message = res.Data["message"]
-			blockLevel := checkPlayerIP(m.Message)
-			if blockLevel == 1 {
+			isPlayerUsingVPN := checkPlayerIP(m.Message)
+			if isPlayerUsingVPN {
 				log.Println("[VPNCheck]:", m.Message, "has been kicked.")
 				res.Data["kickPlayer"] = "yes"
 			} else {
