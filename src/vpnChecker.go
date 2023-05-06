@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 )
@@ -124,7 +122,6 @@ func ipqualityscoreRequest(ipAddress string) bool {
 
 	// fraud_score
 	if IPResponce.FraudScore >= 80 {
-		log.Println("ipqualityscoreRequest:blockedIP")
 		ipAddressArray = AppendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}
