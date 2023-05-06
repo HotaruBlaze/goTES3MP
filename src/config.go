@@ -51,7 +51,7 @@ func LoadConfig() (ConfigLoaded bool) {
 				log.Errorln("[Config]", "Failed to write Config: ", err)
 			}
 			log.Infoln("[Viper]", "Created default config")
-			os.Exit(1)
+			os.Exit(0)
 		} else {
 			log.Errorf("[Viper]", "Fatal error reading config file: %v", err)
 			panic(1)
