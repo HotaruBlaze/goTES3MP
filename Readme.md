@@ -19,6 +19,9 @@ The previous depricated version of this is: [TES3MP_DiscordRelay](https://github
 - [Datamanager](https://github.com/tes3mp-scripts/DataManager) for TES3MP
 - *[cjson](https://github.com/TES3MP/lua-cjson) (Included in tes3mp-scripts.zip)
 
+# Methods Documentation found [Here](docs/methods.md)
+
+
 # Install Instructions - Standalone
 1. Download the latest build with accompanying tes3mp-scripts.zip 
 2. Extract and copy the custom and lib folders to `server` folder.
