@@ -23,7 +23,7 @@ You may also threat this as a Ping/Pong system, as goTES3MP will respond with a 
 The **Forced** variable is used with the command `/forceSync` and will force goTES3MP to accept the data thats being sent with it, this is useful if your ServerID has changed or you restarted/updated goTES3MP, however this is usually not needed and will be handled automatically.
 
 # "IRC" Method:
-Thie script used to support using IRC to **<u>Chat with Discord and tes3mp</u>**. However when this was rewritten with a more refined system, this method was never reimplemented, It's been left in as it may be reimplemented in the future.
+This script used to support using IRC to **<u>Chat with Discord and tes3mp</u>**. However when this was rewritten with a more refined system, this method was never reimplemented, It's been left in as it may be reimplemented in the future.
 
 # "rawDiscord" Method:
 ```lua
