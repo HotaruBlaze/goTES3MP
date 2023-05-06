@@ -2,6 +2,10 @@ local goTES3MPVPNChecker = {}
 local cjson = require("cjson")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 
+local vpnWhitelist = {
+    -- ["exampleUser"] = true,
+}
+
 customEventHooks.registerValidator(
     "OnServerPostInit",
     function()
@@ -13,6 +17,11 @@ customEventHooks.registerValidator(
 customEventHooks.registerHandler(
     "OnPlayerConnect",
     function(eventStatus, pid)
+        local playerName = string.lower(tes3mp.GetName(pid))
+
+        if vpnWhitelist[playerName] then
+            return
+        end
 
         local IP = tes3mp.GetIP(pid)
         local messageJson = {
