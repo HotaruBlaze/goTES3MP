@@ -1,18 +1,20 @@
 # goTES3MP for TES3MP
-### Note:
-This was an attempt at having an aditional layer ontop of tes3mp, however this proved to be unreliable. So this was replaced with a client-server model, that allows you to move more advanced logic to golang, And by default serves as a replacement for [TES3MP_DiscordRelay](https://github.com/HotaruBlaze/TES3MP_DiscordRelay)
 
-# Known Issues
-<!-- * TES3MP does not shutdown correctly most of the time with SIGINT, or closing the application, It's recommended to use another script for this, such as [ShutdownServer](https://github.com/tes3mp-scripts/ShutdownServer). -->
-<!-- * Sometimes goTES3MP loses connection to Discord, this usually fixes itself after a couple of minutes, if not try running the "reloaddiscord" command.  -->
-* Mentioning Channel names and emotes will be glitched/formatted incorrectly, This is known and a fix is being looked for.
+An golang Client/Server appliaction for TES3MP utilizing golang and IRC for server communication and features such as a Discord-Chat bridge, anti-VPN protection and more. 
 
-# Goal
-- [x] Recreate [TES3MP_DiscordRelay](https://github.com/HotaruBlaze/TES3MP_DiscordRelay) with bug fixes and Discord role support.
-- [X] Added a web endpoint for accessing server status, such as current player count and players.
-- [X] Show CurrentPlayers/MaxPlayers as Discord bot status.
+The previous depricated version of this is: [TES3MP_DiscordRelay](https://github.com/HotaruBlaze/TES3MP_DiscordRelay)
+
+# Features
+- Discord-Chatbridge to/from TES3MP and Discord
+- Anti-VPN protection, using publicly available apis
+- Ability to do remote TES3MP commands from Discord.
+# Worthwhile Notes
+* TES3MP does not shutdown correctly most of the time with SIGINT, or closing the application, It's recommended to use another script for this, such as [ShutdownServer](https://github.com/tes3mp-scripts/ShutdownServer).
+
+* Sometimes goTES3MP fails to connect to Discord, this usually fixes itself after a couple of minutes, if not try running the "reloaddiscord" command on goTES3MP. 
 
 # Requirements
+- Golang version >= 1.20 
 - An IRC Server, I recommend my personal fork of [oragono](https://github.com/oragono/oragono) found [here](https://github.com/HotaruBlaze/oragono-tes3mp)
 - [Datamanager](https://github.com/tes3mp-scripts/DataManager) for TES3MP
 - *[cjson](https://github.com/TES3MP/lua-cjson) (Included in tes3mp-scripts.zip)
@@ -58,4 +60,11 @@ networks:
   relay-net:
 volumes:
   irc_data:
+```
+# Build Instructions - Linux (assumes Ubuntu/Debian)
+```
+sudo apt install golang-go git
+git clone https://github.com/HotaruBlaze/goTES3MP
+cd goTES3MP
+./scripts/build.sh
 ```
