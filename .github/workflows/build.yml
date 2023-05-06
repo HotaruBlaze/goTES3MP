@@ -2,7 +2,7 @@ name: Build
 
 on:
   release:
-    types: [released]
+    types: [published]
 
 env:
   IMAGE_REGISTRY: ghcr.io
