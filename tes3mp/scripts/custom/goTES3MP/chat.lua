@@ -1,14 +1,24 @@
 local cjson = require("cjson")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPChat = {}
-local DiscordChannel = ""
-local DiscordServer = ""
+
+local discordServer = ""
+local discordChannel = ""
+local goTES3MPServerID = ""
+
 local maxCharMessageLength = 1512 -- This can be set to 1512 if using my personal fork(Temporary fix) 450 Default
 
-goTES3MPChat.ConfigureDiscord = function(discordserver, discordchannel)
-    DiscordServer = DiscordServer
-    DiscordChannel = DiscordChannel
-end
+customEventHooks.registerValidator(
+    "OnServerPostInit",
+    function()
+        -- Get the default configs from goTES3MP
+        discordServer = goTES3MP.GetDefaultDiscordServer()
+        discordChannel = goTES3MP.GetDefaultDiscordChannel()
+        goTES3MPServerID = goTES3MP.GetServerID()
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:chat]: Loaded")
+    end
+)
+
 
 customEventHooks.registerHandler(
     "OnPlayerAuthentified",
@@ -19,8 +29,8 @@ customEventHooks.registerHandler(
             serverid = GOTES3MPServerID,
             syncid = GoTES3MPSyncID,
             data = {
-                channel = GoTES3MP_DiscordChannel,
-                server = GoTES3MP_DiscordServer,
+                channel = discordChannel,
+                server = discordServer,
                 message = "**" .. "[TES3MP] " .. tes3mp.GetName(pid) .. " has connected" .. "**"
             }
         }
@@ -41,8 +51,8 @@ customEventHooks.registerValidator(
             serverid = GOTES3MPServerID,
             syncid = GoTES3MPSyncID,
             data = {
-                channel = GoTES3MP_DiscordChannel,
-                server = GoTES3MP_DiscordServer,
+                channel = discordChannel,
+                server = discordServer,
                 message = "**" .. "[TES3MP] " .. tes3mp.GetName(pid) .. " has disconnected" .. "**"
             }
         }
@@ -57,17 +67,8 @@ customEventHooks.registerValidator(
     "OnPlayerSendMessage",
     function(eventStatus, pid, message)
         if string.len(message) > maxCharMessageLength then
-            tes3mp.SendMessage(
-                pid,
-                color.Red ..
-                    "[System] " ..
-                        color.Default .. "Warning, Message was too long and was not relayed to discord." .. "\n",
-                false
-            )
-            tes3mp.LogMessage(
-                enumerations.log.WARN,
-                "Chat message for " .. '"' .. tes3mp.GetName(pid) .. '"' .. " was not sent"
-            )
+            tes3mp.SendMessage(pid,color.Red .."[goTES3MP] " ..color.Default .. "Warning, Message was too long and was not relayed to discord\n",false)
+            tes3mp.LogMessage(enumerations.log.WARN,"Chat message for " .. '"' .. tes3mp.GetName(pid) .. '"' .. " was not sent")
         else
             local messageJson = {
                 method = "rawDiscord",
@@ -75,8 +76,8 @@ customEventHooks.registerValidator(
                 serverid = GOTES3MPServerID,
                 syncid = GoTES3MPSyncID,
                 data = {
-                    channel = GoTES3MP_DiscordChannel,
-                    server = GoTES3MP_DiscordServer,
+                    channel = discordChannel,
+                    server = discordServer,
                     message = tes3mp.GetName(pid) .. ": " .. message
                 }
             }

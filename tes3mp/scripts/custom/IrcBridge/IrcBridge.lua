@@ -178,6 +178,7 @@ customEventHooks.registerValidator(
     "OnServerInit",
     function()
         IRCTimerId = tes3mp.CreateTimer("OnIRCUpdate", time.seconds(1))
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:Init]: ".. IrcBridge.version.. " Loaded")
     end
 )
 

@@ -1,20 +1,20 @@
 local Sync = {}
 SyncTimerID = nil
+
 -- SyncTimer: In seconds
 local SyncTimer = 30
+
 local cjson = require("cjson")
 
 -- Ping GoTES3MP with stats
 Sync.SendSync = function(forceResync)
     local ServerID = goTES3MP.GetServerID()
-    -- local SyncID = goTES3MP.GetSyncID()
     if goTES3MP.GetServerID() ~= "" then
         local messageJson = {
             ServerID = ServerID,
             method = "Sync",
             source = "TES3MP",
             data = {
-                -- SyncID = SyncID,
                 MaxPlayers = tostring(tes3mp.GetMaxPlayers()),
                 CurrentPlayerCount = tostring(logicHandler.GetConnectedPlayerCount()),
                 Forced = tostring(forceResync),

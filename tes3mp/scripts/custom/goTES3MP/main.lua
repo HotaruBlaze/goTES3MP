@@ -1,6 +1,4 @@
 local cjson = require("cjson")
-GoTES3MP_DiscordChannel = ""
-GoTES3MP_DiscordServer = ""
 -- GoTES3MPSyncID = ""
 GOTES3MPServerID = ""
 WaitingForSync = false
@@ -15,20 +13,20 @@ local goTES3MPVPNCheck = require("custom.goTES3MP.vpnChecker")
 
 goTES3MP.defaultConfig = {
     serverid = "",
-    discordchannel = "",
-    discordalerts = "",
-    discordserver = ""
+    defaultDiscordServer = ""
+    defaultDiscordChannel = "",
+    defaultDiscordNotifications = "",
+    discordChatChannel = "",
 }
 
 goTES3MP.config = DataManager.loadData("goTES3MP", goTES3MP.defaultConfig)
 
 goTES3MP.GetServerID = function()
-    if GOTES3MPServerID == "" then
-        GOTES3MPServerID = goTES3MPUtils.randomString(16) 
-        goTES3MP.config.serverid = GOTES3MPServerID
+    if goTES3MP.config.serverid == "" then
+        goTES3MP.config.serverid = goTES3MPUtils.randomString(16) 
         DataManager.saveData("goTES3MP", goTES3MP.config)
     end
-    return GOTES3MPServerID
+    return goTES3MP.config.serverid
 end
 
 -- goTES3MP.GetSyncID = function()
@@ -38,21 +36,23 @@ end
 --     return GoTES3MPSyncID
 -- end
 
-goTES3MP.GetDiscordChannel = function()
-    return GoTES3MP_DiscordChannel
-end
-goTES3MP.GetDiscordServer = function()
-    return GoTES3MP_DiscordServer
+goTES3MP.GetDefaultDiscordChannel = function()
+    return goTES3MP.config.defaultDiscordChannel
 end
 
+goTES3MP.GetDefaultDiscordNotificationsChannel = function()
+    return goTES3MP.config.defaultDiscordNotifications
+end
+
+goTES3MP.GetDefaultDiscordServer = function()
+    return goTES3MP.config.defaultDiscordServer
+end
 
 customEventHooks.registerValidator(
-    "OnServerPostInit",
+    "OnServerInit",
     function()
         goTES3MP.GetServerID()
-        -- goTES3MP.GetSyncID()
-        GoTES3MP_DiscordServer = goTES3MP.config.discordserver
-        GoTES3MP_DiscordChannel = goTES3MP.config.discordchannel
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: main Initialized")
     end
 )
 
@@ -60,11 +60,11 @@ customEventHooks.registerHandler("OnServerInit", function(eventStatus, pid)
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",
-        serverid = GOTES3MPServerID,
+        serverid = goTES3MP.config.serverid,
         syncid = GoTES3MPSyncID,
         data = {
-            channel = goTES3MP.config.discordalerts,
-			server = GoTES3MP_DiscordServer,
+            channel = goTES3MP.config.defaultDiscordNotifications,
+			server = goTES3MP.config.defaultDiscordServer,
 			message = "**".."[TES3MP] Server is online. :yellow_heart:".."**"
         }
     }
@@ -77,15 +77,15 @@ customEventHooks.registerHandler("OnServerInit", function(eventStatus, pid)
     end
 end)
 
-customEventHooks.registerValidator("OnServerExit", function(eventStatus, pid)
+customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",
         serverid = GOTES3MPServerID,
         syncid = GoTES3MPSyncID,
         data = {
-            channel = goTES3MP.config.discordalerts,
-			server = GoTES3MP_DiscordServer,
+            channel = goTES3MP.config.defaultDiscordNotifications,
+			server = goTES3MP.config.defaultDiscordServer,
 			message = "**".."[TES3MP] Server is offline. :warning:".."**"
         }
     }
