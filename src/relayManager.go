@@ -55,9 +55,6 @@ func processRelayMessage(s baseResponce) bool {
 			IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
 			usrMsg := res.Data["User"] + ": " + res.Data["Message"]
 			logRelayedMessages("Discord", usrMsg)
-		case "Discord":
-			log.Println("Replaced with rawDiscord, Depreciation of this method is planned")
-			return false
 		case "rawDiscord":
 			var m rawDiscordStruct
 			m.Channel = res.Data["channel"]
