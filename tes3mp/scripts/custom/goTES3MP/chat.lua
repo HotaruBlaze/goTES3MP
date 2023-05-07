@@ -26,7 +26,7 @@ customEventHooks.registerHandler(
         local messageJson = {
             method = "rawDiscord",
             source = "TES3MP",
-            serverid = GOTES3MPServerID,
+            serverid = goTES3MPServerID,
             syncid = GoTES3MPSyncID,
             data = {
                 channel = discordChannel,
@@ -48,7 +48,7 @@ customEventHooks.registerValidator(
         local messageJson = {
             method = "rawDiscord",
             source = "TES3MP",
-            serverid = GOTES3MPServerID,
+            serverid = goTES3MPServerID,
             syncid = GoTES3MPSyncID,
             data = {
                 channel = discordChannel,
@@ -67,13 +67,13 @@ customEventHooks.registerValidator(
     "OnPlayerSendMessage",
     function(eventStatus, pid, message)
         if string.len(message) > maxCharMessageLength then
-            tes3mp.SendMessage(pid,color.Red .."[goTES3MP] " ..color.Default .. "Warning, Message was too long and was not relayed to discord\n",false)
-            tes3mp.LogMessage(enumerations.log.WARN,"Chat message for " .. '"' .. tes3mp.GetName(pid) .. '"' .. " was not sent")
+            tes3mp.SendMessage(pid, color.Red .."[goTES3MP] " .. color.Default .. "Warning, Message was too long and was not relayed to discord\n",false)
+            tes3mp.LogMessage(enumerations.log.WARN, "Chat message for " .. '"' .. tes3mp.GetName(pid) .. '"' .. " was not sent")
         else
             local messageJson = {
                 method = "rawDiscord",
                 source = "TES3MP",
-                serverid = GOTES3MPServerID,
+                serverid = goTES3MPServerID,
                 syncid = GoTES3MPSyncID,
                 data = {
                     channel = discordChannel,

@@ -13,10 +13,9 @@ local goTES3MPVPNCheck = require("custom.goTES3MP.vpnChecker")
 
 goTES3MP.defaultConfig = {
     serverid = "",
-    defaultDiscordServer = ""
+    defaultDiscordServer = "",
     defaultDiscordChannel = "",
     defaultDiscordNotifications = "",
-    discordChatChannel = "",
 }
 
 goTES3MP.config = DataManager.loadData("goTES3MP", goTES3MP.defaultConfig)
