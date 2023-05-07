@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
 	color "github.com/fatih/color"
+	"github.com/spf13/viper"
 )
 
 // ServerStatus struct
@@ -57,6 +59,7 @@ func getStatus(firstLaunch bool, showModules bool) {
 	color.HiBlack("goTES3MP: " + Build)
 	color.HiBlack("Commit: " + GitCommit)
 	color.HiBlack("Github: " + "https://github.com/hotarublaze/goTES3MP" + "\n")
+	color.HiBlack("Interactive Console: " + strconv.FormatBool(viper.GetBool("enableInteractiveConsole")))
 	if firstLaunch {
 		color.HiBlack(strings.Repeat("=", 32))
 	}

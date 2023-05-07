@@ -41,6 +41,7 @@ var tes3mpLogMessage = "[goTES3MP]"
 
 // MultiWrite : Prints to logfile and os.Stdout
 var MultiWrite io.Writer
+var reader *bufio.Reader
 
 func init() {
 	if len(GitCommit) == 0 {
@@ -76,33 +77,36 @@ func main() {
 		go MemoryDebugInfo()
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
+	if viper.GetBool("enableInteractiveConsole") {
+		reader = bufio.NewReader(os.Stdin)
+	}
 	getStatus(true, false)
 	for {
 		time.Sleep(2 * 100 * time.Millisecond)
-		// TODO: This should be tweaked so ">" is always at the bottom.
-		fmt.Print("> ")
-		command, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		command = strings.TrimRight(command, "\r\n")
-		args := strings.Split(command, " ")
+		if viper.GetBool("enableInteractiveConsole") {
+			// TODO: This should be tweaked so ">" is always at the bottom.
+			fmt.Print("> ")
+			command, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			command = strings.TrimRight(command, "\r\n")
+			args := strings.Split(command, " ")
 
-		switch strings.ToLower(args[0]) {
-		case "status":
-			commandStatus()
-		case "reloadirc":
-			commandIrcReconnect()
-		case "reloaddiscord":
-			color.HiBlack("Attempting to reload Discord")
-			InitDiscord()
-		case "exit", "quit", "stop":
-			color.HiBlack("Shutting down...")
-			commandShutdown()
-		default:
-			color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
+			switch strings.ToLower(args[0]) {
+			case "status":
+				commandStatus()
+			case "reloadirc":
+				commandIrcReconnect()
+			case "reloaddiscord":
+				color.HiBlack("Attempting to reload Discord")
+				InitDiscord()
+			case "exit", "quit", "stop":
+				color.HiBlack("Shutting down...")
+				commandShutdown()
+			default:
+				color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
+			}
 		}
 	}
 }
