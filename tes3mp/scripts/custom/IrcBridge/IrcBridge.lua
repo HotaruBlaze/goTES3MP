@@ -16,7 +16,7 @@ local goTES3MPCommands = require("custom.goTES3MP.commands")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v4.0.5-goTES3MP"
+IrcBridge.version = "v4.0.6-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
 
@@ -115,11 +115,11 @@ IrcBridge.RecvMessage = function()
                             local messageJson = {
                                 method = "rawDiscord",
                                 source = "TES3MP",
-                                serverid = GOTES3MPServerID,
+                                serverid = goTES3MP.GetServerID(),
                                 syncid = GoTES3MPSyncID,
                                 data = {
-                                    channel = GoTES3MP_DiscordChannel,
-                                    server = GoTES3MP_DiscordServer,
+                                    channel = goTES3MP.GetDefaultDiscordChannel(),
+                                    server = goTES3MP.GetDefaultDiscordServer(),
                                     message = "**"..playerName.." was kicked for trying to connect with a VPN.".."**"
                                 }
                             }

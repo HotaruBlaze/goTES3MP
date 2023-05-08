@@ -1,5 +1,7 @@
 local commands = {}
 local goTES3MPUtils = require("custom.goTES3MP.utils")
+local goTES3MPgetJournal = require("custom.goTES3MP.getJournal")
+local goTES3MPgetPlayers = require("custom.goTES3MP.getPlayers")
 
 commands.kickPlayer = function(player, discordReplyChannel)
     targetPid = commands.getPlayerPID(player)
@@ -62,31 +64,39 @@ commands.main = function(player, command, commandArgs, discordReplyChannel)
     if command == "kickplayer" then
         commands.kickPlayer(player, discordReplyChannel)
     end
+    if command == "players" then
+        goTES3MPgetPlayers.getPlayers(discordReplyChannel)
+    end
     if command == "runconsole" then
         commands.runConsole(player, commandArgs, discordReplyChannel)
     end
     if command == "resetkills" then
         commands.resetKills(discordReplyChannel)
     end
+    if command == "getJournal" then
+        goTES3MPgetJournal.GetJournalEntrys(player, commandArgs, discordReplyChannel)
+    end
     if command == "help" then
         local commandList = ""
         commandList = commandList .. "```" .. "\n"
         commandList =
-            commandList .. "!kickplayer (PlayerName): Kicks the specified player from the tes3mp server." .. "\n"
+            commandList .. "!kickplayer (Player): Kicks the specified player from the tes3mp server." .. "\n"
         commandList =
             commandList ..
-            "!runconsole (PlayerName) (Console Command): Run a console command on a specific Player." .. "\n"
+            "!runconsole (Player) (Command): Run a console command on a specific Player." .. "\n"
         commandList = commandList .. "!resetkills: Reset player kills." .. "\n"
+        commandList = commandList .. "!players: List Players" .. "\n"
+        commandList = commandList .. "!getJournal (Player) (QuestID): Get a players Journal Entry" .. "\n"
         commandList = commandList .. "```" .. "\n"
 
         local messageJson = {
             method = "rawDiscord",
             source = "TES3MP",
-            serverid = GOTES3MPServerID,
+            serverid = goTES3MP.GetServerID(),
             syncid = GoTES3MPSyncID,
             data = {
                 channel = discordReplyChannel,
-                server = GoTES3MP_DiscordServer,
+                server = goTES3MP.GetDefaultDiscordServer(),
                 message = commandList
             }
         }
@@ -102,11 +112,11 @@ commands.SendResponce = function(discordReplyChannel)
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",
-        serverid = GOTES3MPServerID,
+        serverid = goTES3MP.GetServerID(),
         syncid = GoTES3MPSyncID,
         data = {
             channel = discordReplyChannel,
-            server = GoTES3MP_DiscordServer,
+            server = goTES3MP.GetDefaultDiscordServer(),
             message = "**Command Executed**"
         }
     }
@@ -117,6 +127,8 @@ commands.SendResponce = function(discordReplyChannel)
     end
 end
 
+-- Running this before a player connects, will cause a tes3mp crash
+-- tes3mp.GetLastPlayerId() crashes if a player hasnt connected since server start.
 commands.getPlayerPID = function(str)
     local lastPid = tes3mp.GetLastPlayerId()
     if str ~= nil then

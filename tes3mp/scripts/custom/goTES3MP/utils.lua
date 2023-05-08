@@ -31,4 +31,14 @@ goTES3MPUtils.isJsonValidDecode = function(json_str)
     end  
 end
 
+goTES3MPUtils.alphanumsort = function(o)
+	function padnum(d)
+		return ("%03d%s"):format(#d, d)
+	end
+	table.sort(o, function(a, b)
+		return tostring(a):gsub("%d+", padnum) < tostring(b):gsub("%d+", padnum)
+	end)
+	return o
+end
+
 return goTES3MPUtils

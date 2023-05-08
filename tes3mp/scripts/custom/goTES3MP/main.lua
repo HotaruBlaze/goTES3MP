@@ -1,6 +1,5 @@
 local cjson = require("cjson")
 -- GoTES3MPSyncID = ""
-GOTES3MPServerID = ""
 WaitingForSync = false
 local goTES3MP = {}
 local TES3MPOnline = false 
@@ -80,7 +79,7 @@ customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",
-        serverid = GOTES3MPServerID,
+        serverid = goTES3MP.config.serverid,
         syncid = GoTES3MPSyncID,
         data = {
             channel = goTES3MP.config.defaultDiscordNotifications,
