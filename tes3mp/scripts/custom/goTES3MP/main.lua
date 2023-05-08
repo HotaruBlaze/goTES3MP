@@ -50,6 +50,7 @@ end
 customEventHooks.registerValidator(
     "OnServerInit",
     function()
+        goTES3MP.DoConfigMigration()
         goTES3MP.GetServerID()
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: main Initialized")
     end
@@ -101,7 +102,7 @@ goTES3MP.DoConfigMigration = function()
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:main]: Running Migration for Config N/A to Config v1.")
         -- Write a new config, using the previous config, This Assumes your using a config before Versioning was added.
         local newConfig = goTES3MP.defaultConfig
-        
+
         newConfig.defaultDiscordServer = currentConfig.discordserver
         newConfig.defaultDiscordChannel = currentConfig.discordchannel
         newConfig.defaultDiscordNotifications = currentConfig.discordalerts
