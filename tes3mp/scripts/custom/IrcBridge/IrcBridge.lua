@@ -87,7 +87,7 @@ IrcBridge.RecvMessage = function()
                 end
 
                 local responce = goTES3MPUtils.isJsonValidDecode(message)
-                -- Unfinishedd
+                -- Unfinished
                 if responce.Status == "Pong" and WaitingForSync then
                     goTES3MPSync.GotSync(responce.ServerID, responce.SyncID)
                 end
@@ -124,7 +124,10 @@ IrcBridge.RecvMessage = function()
                                 }
                             }
 
-                            IrcBridge.SendSystemMessage(cjson.encode(messageJson))
+                            local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+                            if responce ~= nil then
+                                IrcBridge.SendSystemMessage(responce)
+                            end
                         end
                     end
                 end

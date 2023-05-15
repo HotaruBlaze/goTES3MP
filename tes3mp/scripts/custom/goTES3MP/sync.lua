@@ -1,4 +1,5 @@
 local Sync = {}
+local goTES3MPUtils = require("custom.goTES3MP.utils")
 SyncTimerID = nil
 
 -- SyncTimer: In seconds
@@ -21,7 +22,10 @@ Sync.SendSync = function(forceResync)
                 Status = "Ping",
             }
         }
-        IrcBridge.SendSystemMessage(cjson.encode(messageJson))
+        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+        if responce ~= nil then
+            IrcBridge.SendSystemMessage(responce)
+        end
 
         WaitingForSync = true
     end
