@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 )
@@ -50,17 +51,31 @@ type ipqualityscoreResponceStruct struct {
 }
 
 func checkPlayerIP(ipAddress string) bool {
+	var wasIPBlocked bool
+
 	if slices.Contains(ipAddressArray, ipAddress) {
 		return true
 	}
-	var wasIPBlocked bool
 
-	wasIPBlocked = ipHubRequest(ipAddress)
-	if wasIPBlocked {
-		return true
+	// If no api keys are set, print out a warning and skip the checks.
+	if len(viper.GetString("vpn.iphub_apikey")) == 0 && len(viper.GetString("vpn.iphub_apikey")) == 0 {
+		log.Warnln("[vpnChecker]: ", "vpnChecker was triggered, however no api keys are currently set. Allowing player to join.")
+		return false
 	}
 
-	wasIPBlocked = ipqualityscoreRequest(ipAddress)
+	// IPHub API Check
+	if len(viper.GetString("vpn.iphub_apikey")) > 0 {
+		wasIPBlocked = ipHubRequest(ipAddress)
+		if wasIPBlocked {
+			return true
+		}
+	}
+
+	// IPQualityScore API Check
+	if len(viper.GetString("vpn.ipqualityscore_apikey")) > 0 {
+		wasIPBlocked = ipqualityscoreRequest(ipAddress)
+	}
+
 	return wasIPBlocked
 }
 

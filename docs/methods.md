@@ -69,6 +69,6 @@ https://ipqualityscore.com
 
 You may find the related goTES3MP code [here](../src/vpnChecker.go), However theirs not much to read, it will just show you the api responces and how the bot is building/handling it.
 
-Note that currently, if you wish to use Anti-VPN you must use both services, as iphub can miss some ip's that ipqualityscore will catch. <br><u>**Warning:** Their is currently no check in place if one of the api keys are missing and the application may misbehave.</u>
+Note that currently, if you wish to use Anti-VPN you should use both services, as iphub can miss some ip's that ipqualityscore will catch.
 
 If an IP is deamed to be an VPN or seemingly bad, such as a proxy, it will send a VPNCheck method back to tes3mp, with a modified data packet, telling it to kick that pid. You can find this [Here](../tes3mp/scripts/custom/IrcBridge/IrcBridge.lua#L107-L130)
