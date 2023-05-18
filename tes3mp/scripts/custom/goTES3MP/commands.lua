@@ -12,7 +12,7 @@ commands.kickPlayer = function(player, discordReplyChannel)
             false
         )
         tes3mp.Kick(targetPid)
-        commands.SendResponce(discordReplyChannel)
+        commands.Sendresponse(discordReplyChannel)
     end
 end
 
@@ -20,7 +20,7 @@ commands.runConsole = function(player, commandArgs, discordReplyChannel)
     targetPid = commands.getPlayerPID(player)
     if targetPid ~= nil then
         logicHandler.RunConsoleCommandOnPlayer(targetPid, commandArgs)
-        commands.SendResponce(discordReplyChannel)
+        commands.Sendresponse(discordReplyChannel)
     end
 end
 
@@ -36,7 +36,7 @@ commands.resetKills = function(discordReplyChannel)
         end
     end
     tes3mp.LogMessage(enumerations.log.INFO, "All the kill counts for creatures and NPCs have been reset.")
-    commands.SendResponce(discordReplyChannel)
+    commands.Sendresponse(discordReplyChannel)
 end
 commands.processCommand = function(player, command, commandArgs, discordReplyChannel)
     if player ~= nil then
@@ -98,7 +98,7 @@ commands.processCommand = function(player, command, commandArgs, discordReplyCha
     end
 end
 
-commands.SendResponce = function(discordReplyChannel)
+commands.Sendresponse = function(discordReplyChannel)
     goTES3MPUtils.sendDiscordMessage(
         goTES3MP.GetServerID(),
         discordReplyChannel,

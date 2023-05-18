@@ -62,24 +62,24 @@ IrcBridge.RecvMessage = function()
                     print("IRCDebug: " .. message)
                 end
 
-                local responce = goTES3MPUtils.isJsonValidDecode(message)
+                local response = goTES3MPUtils.isJsonValidDecode(message)
 
-                IrcBridge.switch(responce.method) {
+                IrcBridge.switch(response.method) {
                     ["Sync"] = function()
-                        goTES3MPSync.GotSync(responce.ServerID, responce.SyncID)
+                        goTES3MPSync.GotSync(response.ServerID, response.SyncID)
                     end,
                     ["Command"] = function()
-                        goTES3MPCommands.processCommand(responce.data["TargetPlayer"],responce.data["Command"],responce.data["CommandArgs"], responce.data["replyChannel"])
+                        goTES3MPCommands.processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
                     end,
                     ["DiscordChat"] = function()
-                        IrcBridge.chatMessage(responce)
+                        IrcBridge.chatMessage(response)
                     end,
                     ["VPNCheck"] = function()
-                        goTES3MPVPNChecker.kickPlayer(responce.data["playerpid"], responce.data["kickPlayer"])
+                        goTES3MPVPNChecker.kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
                     end,
                     default = function()
-                        print("Error: "..tableHelper.getSimplePrintableTable(responce))
-                        print("Unknown method (" .. responce.method .. ") was received.")
+                        print("Error: "..tableHelper.getSimplePrintableTable(response))
+                        print("Unknown method (" .. response.method .. ") was received.")
                     end,
                 }
             end
@@ -90,18 +90,18 @@ IrcBridge.RecvMessage = function()
     tes3mp.RestartTimer(IRCTimerId, time.seconds(1))
 end
 
-IrcBridge.chatMessage = function(responce)
-    local wherefrom = color.Default .. "[" .. responce.source .. "]" .. color.Default
+IrcBridge.chatMessage = function(response)
+    local wherefrom = color.Default .. "[" .. response.source .. "]" .. color.Default
     local finalMessage = ""
 
-    if responce.method == "DiscordChat" then
-        wherefrom = config.IRCBridge.discordColor .. "[" .. responce.source .. "]" .. color.Default
+    if response.method == "DiscordChat" then
+        wherefrom = config.IRCBridge.discordColor .. "[" .. response.source .. "]" .. color.Default
     end
 
-    if responce.data["RoleColor"] ~= "" and responce.data["RoleColor"] ~= "" then
-        finalMessage = wherefrom .. " " .. staffRole .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n"
+    if response.data["RoleColor"] ~= "" and response.data["RoleColor"] ~= "" then
+        finalMessage = wherefrom .. " " .. staffRole .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
     else
-        finalMessage = wherefrom .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n"
+        finalMessage = wherefrom .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
     end
     for pid, player in pairs(Players) do
         if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then

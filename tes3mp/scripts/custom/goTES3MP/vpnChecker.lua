@@ -44,9 +44,9 @@ customEventHooks.registerHandler(
             }
         }
 
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
+        local response = goTES3MPUtils.isJsonValidEncode(messageJson)
+        if response ~= nil then
+            IrcBridge.SendSystemMessage(response)
         end
     end
 )

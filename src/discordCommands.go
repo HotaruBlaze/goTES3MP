@@ -13,7 +13,7 @@ import (
 
 func discordCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	Data := make(map[string]string)
-	var commandStruct baseResponce
+	var commandStruct baseresponse
 
 	re := regexp.MustCompile(`[^\s"']+|([^\s"']*"([^"]*)"[^\s"']*)+|'([^']*)`)
 	stringArr := re.FindAllString(m.Content[1:], -1)
@@ -43,8 +43,8 @@ func discordCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	log.Println("Staff Member '"+m.Author.Username+"' has executed the following command:", m.Content[1:])
 
-	jsonResponce, err := json.Marshal(commandStruct)
+	jsonresponse, err := json.Marshal(commandStruct)
 	checkError("discordCommandHandler", err)
-	sendResponce := bytes.NewBuffer(jsonResponce).String()
-	IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
+	sendresponse := bytes.NewBuffer(jsonresponse).String()
+	IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
 }

@@ -67,7 +67,7 @@ goTES3MP will then check that against multiple sources to see how trustworthy an
 https://iphub.info<br>
 https://ipqualityscore.com
 
-You may find the related goTES3MP code [here](../src/vpnChecker.go), However theirs not much to read, it will just show you the api responces and how the bot is building/handling it.
+You may find the related goTES3MP code [here](../src/vpnChecker.go), However theirs not much to read, it will just show you the api responses and how the bot is building/handling it.
 
 Note that currently, if you wish to use Anti-VPN you should use both services, as iphub can miss some ip's that ipqualityscore will catch.
 

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type baseResponce struct {
+type baseresponse struct {
 	ServerID string            `json:"serverid"`
 	Method   string            `json:"method"`
 	Source   string            `json:"source"`
@@ -17,7 +17,7 @@ type baseResponce struct {
 	Data     map[string]string `json:"data"`
 }
 
-func processRelayMessage(s baseResponce) bool {
+func processRelayMessage(s baseresponse) bool {
 	var isValid bool
 	res := &s
 	err := processRelayMessageSanityCheck(res)
@@ -38,7 +38,7 @@ func processRelayMessage(s baseResponce) bool {
 		}
 		isValid = true
 	} else {
-		log.Warnln("ServerID Missing from Responce:")
+		log.Warnln("ServerID Missing from response:")
 	}
 	if isValid {
 		switch res.Method {
@@ -49,10 +49,10 @@ func processRelayMessage(s baseResponce) bool {
 			log.Println("TODO: Method \"IRC\" Not Implemented Yet.")
 			return false
 		case "DiscordChat":
-			jsonResponce, err := json.Marshal(res)
+			jsonresponse, err := json.Marshal(res)
 			checkError("DiscordChat", err)
-			sendResponce := bytes.NewBuffer(jsonResponce).String()
-			IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
+			sendresponse := bytes.NewBuffer(jsonresponse).String()
+			IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
 			usrMsg := res.Data["User"] + ": " + res.Data["Message"]
 			logRelayedMessages("Discord", usrMsg)
 		case "rawDiscord":
@@ -76,10 +76,10 @@ func processRelayMessage(s baseResponce) bool {
 				log.Println("[VPNCheck]:", m.Message, "is not suspected to be using a VPN.")
 				res.Data["kickPlayer"] = "no"
 			}
-			jsonResponce, err := json.Marshal(res)
+			jsonresponse, err := json.Marshal(res)
 			checkError("VPNCheck", err)
-			sendResponce := bytes.NewBuffer(jsonResponce).String()
-			IRCSendMessage(viper.GetString("irc.systemchannel"), sendResponce)
+			sendresponse := bytes.NewBuffer(jsonresponse).String()
+			IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
 		default:
 			log.Println(res.Method, " is an unknown method.")
 		}
@@ -93,7 +93,7 @@ func logRelayedMessages(server string, message string) {
 	}
 }
 
-func processRelayMessageSanityCheck(Rmsg *baseResponce) error {
+func processRelayMessageSanityCheck(Rmsg *baseresponse) error {
 	tempRelayMsg := Rmsg
 	// Tried to convert this to a switch, it didnt like it.
 	if tempRelayMsg.Method == "" {

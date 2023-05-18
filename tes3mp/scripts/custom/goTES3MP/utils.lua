@@ -43,10 +43,10 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
 			message =message
         }
     }
-    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+    local response = goTES3MPUtils.isJsonValidEncode(messageJson)
 
-    if responce ~= nil then
-        IrcBridge.SendSystemMessage(responce)
+    if response ~= nil then
+        IrcBridge.SendSystemMessage(response)
     else
         tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordMessage] failed to send message to discord.s")
     end
