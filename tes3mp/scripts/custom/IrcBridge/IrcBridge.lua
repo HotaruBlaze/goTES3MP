@@ -13,74 +13,49 @@ local goTES3MP = require("custom.goTES3MP.main")
 local goTES3MPSync = require("custom.goTES3MP.sync")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPCommands = require("custom.goTES3MP.commands")
+local goTES3MPConfig = require("custom.goTES3MP.config")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v4.0.6-goTES3MP"
+IrcBridge.version = "v5.0.0-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
 
-IrcBridge.defaultConfig = {
-    nick = "",
-    server = "",
-    port = "6667",
-    password = "",
-    nspasswd = "",
-    systemchannel = "#",
-    nickfilter = "",
-    discordColor = "#825eed",
-    ircColor = "#5D9BEE"
-}
+local config = goTES3MP.GetConfig()
 
-IrcBridge.config = DataManager.loadConfiguration(IrcBridge.scriptName, IrcBridge.defaultConfig)
-
-if (IrcBridge.config == IrcBridge.defaultConfig) then
-    tes3mp.LogMessage(enumerations.log.WARN, "IrcBridge configuration has been generated,")
-    tes3mp.StopServer(0)
-end
-
-if (IrcBridge.config.nick == "" or IrcBridge.config.systemchannel == "" or IrcBridge.config.systemchannel == "#") then
+if (config.IrcBridge.nick == "" or config.IrcBridge.systemchannel == "" or config.IrcBridge.systemchannel == "#") then
     tes3mp.LogMessage(
         enumerations.log.ERROR,
-        "IrcBridge has not been configured correctly." .. "\n" .. "nick, server, and systemchannel are required."
+        "IrcBridge has not been configured correctly."
     )
     tes3mp.StopServer(0)
 end
 
-local nick = IrcBridge.config.nick
-local server = IrcBridge.config.server
-local nspasswd = IrcBridge.config.nspasswd
-local password = IrcBridge.config.password
-local systemchannel = IrcBridge.config.systemchannel
-local nickfilter = IrcBridge.config.nickfilter
-local discordColor = IrcBridge.config.discordColor
-local ircColor = IrcBridge.config.ircColor
-local port = IrcBridge.config.port
 IRCTimerId = nil
 
-local s = irc.new {nick = nick}
-if password ~= "" then
+local s = irc.new {config.IrcBridge.nick = config.IrcBridge.nick}
+if config.IrcBridge.password ~= "" then
     s:connect(
         {
-            host = server,
-            port = port,
-            password = password,
+            host = config.IrcBridge.server,
+            config.IrcBridge.port = config.IrcBridge.port,
+            config.IrcBridge.password = config.IrcBridge.password,
             timeout = 120,
             secure = false
         }
     )
 else
-    s:connect(server, port)
+    s:connect(config.IrcBridge.server, config.IrcBridge.port)
 end
-nspasswd = "identify " .. nspasswd
-s:sendChat("NickServ", nspasswd)
-s:join(systemchannel)
+config.IrcBridge.nspasswd = "identify " .. config.IrcBridge.nspasswd
+s:sendChat("NickServ", config.IrcBridge.nspasswd)
+s:join(config.IrcBridge.systemchannel)
 local lastMessage = ""
 
 IrcBridge.RecvMessage = function()
     s:hook(
         "OnChat",
-        function(user, systemchannel, message)
+        function(user, config.IrcBridge.systemchannel, message)
             if message ~= lastMessage then
                 if IrcBridge.debugMode then
                     print("IRCDebug: " .. message)
@@ -94,7 +69,7 @@ IrcBridge.RecvMessage = function()
                 if
                     responce.method == "Command" and responce.data["replyChannel"] ~= nil and
                         responce.data["Command"]
-                 then
+                then
                     goTES3MPCommands.main(responce.data["TargetPlayer"],responce.data["Command"],responce.data["CommandArgs"], responce.data["replyChannel"])
                 end
                 if responce.method == "DiscordChat" or responce.method == "IRC" then
@@ -142,9 +117,9 @@ end
 IrcBridge.ChatMessage = function(pid, responce)
     local wherefrom = ""
     if responce.method == "DiscordChat" then
-        wherefrom = discordColor .. "[" .. responce.source .. "]" .. color.Default
+        wherefrom = config.IrcBridge.discordColor .. "[" .. responce.source .. "]" .. color.Default
     elseif responce.method == "IRC" then
-        wherefrom = ircColor .. "[" .. responce.source .. "]" .. color.Default
+        wherefrom = config.IrcBridge.ircColor .. "[" .. responce.source .. "]" .. color.Default
     else
         wherefrom = color.Default .. "[" .. responce.source .. "]" .. color.Default
     end
@@ -167,7 +142,7 @@ end
 
 IrcBridge.SendSystemMessage = function(message)
     if message ~= lastMessage then
-        s:sendChat(systemchannel, message)
+        s:sendChat(config.IrcBridge.systemchannel, message)
         lastMessage = message
     end
 end
