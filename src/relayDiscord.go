@@ -44,6 +44,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		message = m.Content
 	}
 
+	// Convert all <@ >, <# >, and similarly formatted items in Discord messages to something we can actually read.
+	message = convertDiscordFormattedItems(message, m.GuildID)
+
 	// Convert <:example:868167672758693909> to :example:
 	message = filterDiscordEmotes(message)
 
