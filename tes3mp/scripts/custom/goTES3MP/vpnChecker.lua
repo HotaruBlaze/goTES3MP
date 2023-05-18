@@ -62,22 +62,12 @@ goTES3MPVPNChecker.kickPlayer = function(pid, shouldKickPlayer)
             tes3mp.SendMessage(pid, playerName .. " was kicked for trying to use a VPN.\n", true, false)
             tes3mp.Kick(pid)
 
-            local messageJson = {
-                method = "rawDiscord",
-                source = "TES3MP",
-                serverid = goTES3MP.GetServerID(),
-                syncid = GoTES3MPSyncID,
-                data = {
-                    channel = goTES3MP.GetDefaultDiscordChannel(),
-                    server = goTES3MP.GetDefaultDiscordServer(),
-                    message = "**"..playerName.." was kicked for trying to connect with a VPN.".."**"
-                }
-            }
-            
-            local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-            if responce ~= nil then
-                IrcBridge.SendSystemMessage(responce)
-            end
+            goTES3MPUtils.sendDiscordMessage(
+                goTES3MP.GetServerID(),
+                goTES3MP.GetDefaultDiscordChannel(),
+                goTES3MP.GetDefaultDiscordServer(),
+                "**"..playerName.." was kicked for trying to connect with a VPN.".."**"
+            )
         end
     end
 end

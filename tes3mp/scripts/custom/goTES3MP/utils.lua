@@ -31,6 +31,27 @@ goTES3MPUtils.isJsonValidDecode = function(json_str)
     end  
 end
 
+goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
+    local messageJson = {
+        method = "rawDiscord",
+        source = "TES3MP",
+        serverid = ServerID,
+        syncid = GoTES3MPSyncID,
+        data = {
+            channel = channel,
+			server = server,
+			message =message
+        }
+    }
+    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
+
+    if responce ~= nil then
+        IrcBridge.SendSystemMessage(responce)
+    else
+        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordMessage] failed to send message to discord.s")
+    end
+end
+
 goTES3MPUtils.alphanumsort = function(o)
 	function padnum(d)
 		return ("%03d%s"):format(#d, d)

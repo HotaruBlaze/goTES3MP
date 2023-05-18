@@ -12,21 +12,12 @@ getJournal.GetJournalEntrys = function(playerName, questID, discordReplyChannel)
             end
         end
         if #questIndexs == 0 then
-            local messageJson = {
-                method = "rawDiscord",
-                source = "TES3MP",
-                serverid = goTES3MP.GetServerID(),
-                syncid = GoTES3MPSyncID,
-                data = {
-                    channel = discordReplyChannel,
-                    server = goTES3MP.GetDefaultDiscordServer(),
-                    message = "**Quest ID is invalid or player does not have this Quest.**"
-                }
-            }
-            local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-            if responce ~= nil then
-                IrcBridge.SendSystemMessage(responce)
-            end
+            goTES3MPUtils.sendDiscordMessage(
+                goTES3MP.GetServerID(),
+                discordReplyChannel,
+                goTES3MP.GetDefaultDiscordServer(),
+                "**Quest ID is invalid or player does not have this Quest.**"
+            )
             return
         end
 
@@ -44,39 +35,19 @@ getJournal.GetJournalEntrys = function(playerName, questID, discordReplyChannel)
         end
         questList = questList .. "```"
 
-        local messageJson = {
-            method = "rawDiscord",
-            source = "TES3MP",
-            serverid = goTES3MP.GetServerID(),
-            syncid = GoTES3MPSyncID,
-            data = {
-                channel = discordReplyChannel,
-                server = goTES3MP.GetDefaultDiscordServer(),
-                message = questList
-            }
-        }
-
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
-        end
+        goTES3MPUtils.sendDiscordMessage(
+            goTES3MP.GetServerID(),
+            discordReplyChannel,
+            goTES3MP.GetDefaultDiscordServer(),
+            questList
+        )
     else
-        local messageJson = {
-            method = "rawDiscord",
-            source = "TES3MP",
-            serverid = goTES3MP.GetServerID(),
-            syncid = GoTES3MPSyncID,
-            data = {
-                channel = discordReplyChannel,
-                server = goTES3MP.GetDefaultDiscordServer(),
-                message = "**"  .. "Player does not Exist." .. "**"
-            }
-        }
-
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
-        end
+        goTES3MPUtils.sendDiscordMessage(
+            goTES3MP.GetServerID(),
+            discordReplyChannel,
+            goTES3MP.GetDefaultDiscordServer(),
+            "**"  .. "Player does not Exist." .. "**"
+        )
     end
 end
 

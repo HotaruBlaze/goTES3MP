@@ -51,42 +51,24 @@ customEventHooks.registerValidator(
 )
 
 customEventHooks.registerHandler("OnServerPostInit", function(eventStatus, pid)
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = config.goTES3MP.serverid,
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = config.goTES3MP.defaultDiscordNotifications,
-			server = config.goTES3MP.defaultDiscordServer,
-			message = "**".."[TES3MP] Server is online. :yellow_heart:".."**"
-        }
-    }
     if TES3MPOnline == false then
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
-        end
+        goTES3MPUtils.sendDiscordMessage(
+            config.goTES3MP.serverid,
+            config.goTES3MP.defaultDiscordNotifications,
+            config.goTES3MP.defaultDiscordServer,
+            "**".."[TES3MP] Server is online. :yellow_heart:".."**"
+        )
         TES3MPOnline = true
     end
 end)
 
 customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = config.goTES3MP.serverid,
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = config.goTES3MP.defaultDiscordNotifications,
-			server = config.goTES3MP.defaultDiscordServer,
-			message = "**".."[TES3MP] Server is offline. :warning:".."**"
-        }
-    }
-    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-    if responce ~= nil then
-        IrcBridge.SendSystemMessage(responce)
-    end
+    goTES3MPUtils.sendDiscordMessage(
+        config.goTES3MP.serverid,
+        config.goTES3MP.defaultDiscordNotifications,
+        config.goTES3MP.defaultDiscordServer,
+        "**".."[TES3MP] Server is offline. :warning:".."**"
+    )
 end)
 
 customCommandHooks.registerCommand("forceSync", function(pid) 

@@ -89,42 +89,22 @@ commands.processCommand = function(player, command, commandArgs, discordReplyCha
         commandList = commandList .. "!getJournal (Player) (QuestID): Get a players Journal Entry" .. "\n"
         commandList = commandList .. "```" .. "\n"
 
-        local messageJson = {
-            method = "rawDiscord",
-            source = "TES3MP",
-            serverid = goTES3MP.GetServerID(),
-            syncid = GoTES3MPSyncID,
-            data = {
-                channel = discordReplyChannel,
-                server = goTES3MP.GetDefaultDiscordServer(),
-                message = commandList
-            }
-        }
-
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
-        end
+        goTES3MPUtils.sendDiscordMessage(
+            goTES3MP.GetServerID(),
+            discordReplyChannel,
+            goTES3MP.GetDefaultDiscordServer(),
+            commandList
+        )
     end
 end
 
 commands.SendResponce = function(discordReplyChannel)
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = goTES3MP.GetServerID(),
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = discordReplyChannel,
-            server = goTES3MP.GetDefaultDiscordServer(),
-            message = "**Command Executed**"
-        }
-    }
-
-    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-    if responce ~= nil then
-        IrcBridge.SendSystemMessage(responce)
-    end
+    goTES3MPUtils.sendDiscordMessage(
+        goTES3MP.GetServerID(),
+        discordReplyChannel,
+        goTES3MP.GetDefaultDiscordServer(),
+        "**Command Executed**"
+    )
 end
 
 -- Running this before a player connects, will cause a tes3mp crash

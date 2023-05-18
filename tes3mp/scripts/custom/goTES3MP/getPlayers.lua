@@ -15,22 +15,12 @@ getPlayers.getPlayers = function(discordReplyChannel)
 
     playerList = "```" .."\n".. playerList .."\n".. "```"
 
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = goTES3MP.GetServerID(),
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = discordReplyChannel,
-            server = goTES3MP.GetDefaultDiscordServer(),
-            message = playerList
-        }
-    }
-
-    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-    if responce ~= nil then
-        IrcBridge.SendSystemMessage(responce)
-    end
+    goTES3MPUtils.sendDiscordMessage(
+        goTES3MP.GetServerID(),
+        discordReplyChannel,
+        goTES3MP.GetDefaultDiscordServer(),
+        playerList
+    )
 end
 
 return getPlayers
