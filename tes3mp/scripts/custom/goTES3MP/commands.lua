@@ -38,7 +38,7 @@ commands.resetKills = function(discordReplyChannel)
     tes3mp.LogMessage(enumerations.log.INFO, "All the kill counts for creatures and NPCs have been reset.")
     commands.SendResponce(discordReplyChannel)
 end
-commands.main = function(player, command, commandArgs, discordReplyChannel)
+commands.processCommand = function(player, command, commandArgs, discordReplyChannel)
     if player ~= nil then
         if string.byte(player:sub(1,1)) == 34 then
             pLength = string.len(player)

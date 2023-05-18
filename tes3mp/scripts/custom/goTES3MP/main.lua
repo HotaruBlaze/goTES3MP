@@ -12,7 +12,7 @@ local goTES3MPVPNCheck = require("custom.goTES3MP.vpnChecker")
 local goTES3MPConfig = require("custom.goTES3MP.config")
 
 
-local config = goTES3MP.GetConfig()
+local config = goTES3MPConfig.GetConfig()
 
 goTES3MP.GetServerID = function()
     if config.goTES3MP.serverid == "" then
@@ -46,11 +46,11 @@ customEventHooks.registerValidator(
     function()
         goTES3MPConfig.LoadConfig()
         goTES3MP.GetServerID()
-        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: main Initialized")
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: Loaded")
     end
 )
 
-customEventHooks.registerHandler("OnServerInit", function(eventStatus, pid)
+customEventHooks.registerHandler("OnServerPostInit", function(eventStatus, pid)
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",

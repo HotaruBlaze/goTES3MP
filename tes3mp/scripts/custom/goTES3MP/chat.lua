@@ -13,7 +13,7 @@ customEventHooks.registerValidator(
         -- Get the default configs from goTES3MP
         discordServer = goTES3MP.GetDefaultDiscordServer()
         discordChannel = goTES3MP.GetDefaultDiscordChannel()
-        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:chat]: Loaded")
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:chat] Loaded")
     end
 )
 

@@ -26,54 +26,59 @@ local defaultConfig = {
     }
 }
 
-goTES3MP.GetConfig = function()
-    if config == nil then
-        config = goTES3MP.LoadConfig()
+goTES3MPConfig.GetConfig = function()
+    if next(config) == nil then
+        config = goTES3MPConfig.LoadConfig()
+        return config
     end
     return config
 end
 
 
-goTES3MP.SaveConfig = function(config)
+goTES3MPConfig.SaveConfig = function(config)
     if config ~= nil then
-        jsonInterface.save(configFile, config)
+        jsonInterface.quicksave(configFile, config)
     end
 end
 
-goTES3MP.LoadConfig = function()
+goTES3MPConfig.LoadConfig = function()
     config = jsonInterface.load(configFile)
+
     if config == nil then
         -- Set a default Config
         config = defaultConfig
 
         -- Lets check if a migration is Possible.
-        newConfig = goTES3MP.MigrateFromDataManager(config)
+        local newConfig = goTES3MPConfig.MigrateFromDataManager(config)
 
         -- If Migration isn't possible.
         if newConfig == nil then
             -- Unable to migrate.
-            goTES3MP.SaveConfig(defaultConfig)
+            goTES3MPConfig.SaveConfig(defaultConfig)
             tes3mp.LogMessage(enumerations.log.WARN, "[GoTES3MP] Migration from an old config was attempted, however failed.")
-            tes3mp.LogMessage(enumerations.log.WARN, "[GoTES3MP] Default configuration has been generated at: \""..config.dataPath .. "/"..configFile.."\"")
+            tes3mp.LogMessage(enumerations.log.WARN, "[GoTES3MP] Default configuration has been generated at: \""..tes3mp.GetDataPath() .. "/"..configFile.."\"")
             
             tes3mp.StopServer(0)
         else
             -- Migration was Successful.
-            goTES3MP.SaveConfig(newConfig)
+            goTES3MPConfig.SaveConfig(newConfig)
         end
     end
+    return config
 end
 
-goTES3MP.MigrateFromDataManager = function(config)
+goTES3MPConfig.MigrateFromDataManager = function(config)
     -- Config file does not already exist, Lets see if we can migrate
     local dataManagerIRCConfig = jsonInterface.load("custom/__config_IrcBridge.json")
     local dataManagerGoTES3MPData = jsonInterface.load("custom/__data_goTES3MP.json")
+
+    local newConfig = defaultConfig
 
     if dataManagerIRCConfig ~= nil or dataManagerGoTES3MPData ~= nil then
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:config]: Attempting to Migrate from DataManager")
 
         -- This was a config change before deprecating DataManager, so we need to run two different migrations.
-        local dataManagerGoTES3MPData = goTES3MPDataMigration(dataManagerGoTES3MPData)
+        dataManagerGoTES3MPData = goTES3MPConfig.goTES3MPDataMigration(dataManagerGoTES3MPData)
 
         -- if IRCBridge config exists
         if dataManagerIRCConfig ~= nil then
@@ -99,19 +104,22 @@ goTES3MP.MigrateFromDataManager = function(config)
     end
 end
 
-goTES3MP.goTES3MPDataMigration = function(currentConfig)
+goTES3MPConfig.goTES3MPDataMigration = function(currentConfig)
     -- Before a config version was added, we dont need to check the version currently.
     if currentConfig.configVersion == nil or currentConfig.discordchannel ~= nil or currentConfig.discordalerts ~= nil or currentConfig.discordserver ~= nil then
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:config]: Running Migration for Config N/A to Config v1.")
         local newConfig = {}
 
-        newConfig.defaultDiscordServer = currentConfig.discordserver
-        newConfig.defaultDiscordChannel = currentConfig.discordchannel
-        newConfig.defaultDiscordNotifications = currentConfig.discordalerts
+        newConfig.defaultDiscordServer = currentConfig.discordserver or currentConfig.defaultDiscordServer or ""
+        newConfig.defaultDiscordChannel = currentConfig.discordchannel or currentConfig.defaultDiscordChannel or ""
+        newConfig.defaultDiscordNotifications = currentConfig.discordalerts or currentConfig.defaultDiscordNotifications or ""
         newConfig.configVersion = 1
-        newConfig.serverid = currentConfig.serverid
-
+        newConfig.serverid = currentConfig.serverid or ""
         return newConfig
+    else
+        return currentConfig
     end
 
 end
+
+return goTES3MPConfig
