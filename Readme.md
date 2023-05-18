@@ -15,8 +15,7 @@ The previous depricated version of this is: [TES3MP_DiscordRelay](https://github
 
 # Requirements
 - Golang version >= 1.20 
-- An IRC Server, I recommend my personal fork of [oragono](https://github.com/oragono/oragono) found [here](https://github.com/HotaruBlaze/oragono-tes3mp)
-- [Datamanager](https://github.com/tes3mp-scripts/DataManager) for TES3MP
+- An IRC Server, I recommend my personal fork of [ergo](https://github.com/ergochat/ergo) found [here](https://github.com/HotaruBlaze/ergo-tes3mp)
 - *[cjson](https://github.com/TES3MP/lua-cjson) (Included in tes3mp-scripts.zip)
 
 # Methods Documentation found [Here](docs/methods.md)
