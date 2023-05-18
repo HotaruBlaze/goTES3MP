@@ -81,6 +81,62 @@ func bToMb(b uint64) uint64 {
 	return b / 1024 / 1024
 }
 
+// convertDiscordFormattedItems : Formats Discord Formatted Items to Text Only
+func convertDiscordFormattedItems(str string, gid string) string {
+	// match all discord formatted items
+	reChannel := regexp.MustCompile(`<#(\d+)>`)
+	reMentionUser := regexp.MustCompile(`<@(?:\!)?(\d+)>`)
+	reMentionRole := regexp.MustCompile(`<@&(\d+)>`)
+
+	str = reChannel.ReplaceAllStringFunc(str, func(s string) string {
+		// get the channels for this guild
+		id := reChannel.FindStringSubmatch(s)[1]
+		channels, err := DiscordSession.GuildChannels(gid)
+		if err != nil {
+			log.Errorln("[utils:convertDiscordFormattedItems]", "Error getting guild channels: ", err)
+			return s
+		}
+		for _, c := range channels {
+			if c.ID == id {
+				return "%" + c.Name
+			}
+		}
+
+		return s
+	})
+	reMentionUser.FindAllStringSubmatchIndex(str, -1)
+	str = reMentionUser.ReplaceAllStringFunc(str, func(s string) string {
+		// get the user for this guild
+		id := reMentionUser.FindStringSubmatch(s)[1]
+		member, err := DiscordSession.GuildMember(gid, id)
+		if err != nil {
+			log.Errorln("[utils:convertDiscordFormattedItems]", "Error getting guild member: ", err)
+			return s
+		}
+		if member.Nick != "" {
+			return member.Nick
+		} else {
+			return member.User.Username
+		}
+	})
+	str = reMentionRole.ReplaceAllStringFunc(str, func(s string) string {
+		// get the role for this guild
+		id := reMentionRole.FindStringSubmatch(s)[1]
+		roles, err := DiscordSession.GuildRoles(gid)
+		if err != nil {
+			log.Errorln("[utils:convertDiscordFormattedItems]", "Error getting guild roles: ", err)
+			return s
+		}
+		for _, r := range roles {
+			if r.ID == id {
+				return "@" + r.Name
+			}
+		}
+		return s
+	})
+	return str
+}
+
 // filterDiscordEmotes : Formats Discord Emotes Correctly
 func filterDiscordEmotes(str string) string {
 	re := regexp.MustCompile(`<:(\S+):\d+>`)
