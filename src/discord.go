@@ -30,11 +30,20 @@ func InitDiscord() {
 
 	DiscordSession = Discord
 	Discord.AddHandler(messageCreate)
+	Discord.AddHandler(ready)
 	Discord.AddHandler(UpdateDiscordStatus)
 
 	err = Discord.Open()
 	if err != nil {
 		log.Errorln("error opening connection,", err)
+	}
+}
+
+func ready(s *discordgo.Session, event *discordgo.Ready) {
+	// Set the playing status.
+	err := s.UpdateGameStatus(0, "")
+	if err != nil {
+		log.Println(err)
 	} else {
 		log.Println(tes3mpLogMessage, "Discord Module is now running")
 	}
