@@ -99,6 +99,7 @@ IrcBridge.chatMessage = function(response)
     end
 
     if response.data["RoleColor"] ~= "" and response.data["RoleColor"] ~= "" then
+        local staffRole = "#" .. response.data["RoleColor"] .. "[" .. response.data["RoleName"] .. "]" .. color.Default
         finalMessage = wherefrom .. " " .. staffRole .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
     else
         finalMessage = wherefrom .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
