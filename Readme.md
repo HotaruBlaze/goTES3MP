@@ -1,4 +1,8 @@
 # goTES3MP for TES3MP
+[![Main](https://github.com/HotaruBlaze/goTES3MP/actions/workflows/build.yml/badge.svg)](https://github.com/HotaruBlaze/goTES3MP/actions/workflows/build.yml)
+[![](https://dcbadge.vercel.app/api/server/66KTvnwFUC?style=flat-square)](https://discord.gg/66KTvnwFUC)
+
+
 
 An golang Client/Server appliaction for TES3MP utilizing golang and IRC for server communication and features such as a Discord-Chat bridge, anti-VPN protection and more. 
 
