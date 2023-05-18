@@ -13,9 +13,10 @@ var ServerID string
 
 // var registrationToken
 type serverSyncResponce struct {
-	ServerID string
+	ServerID string `json:"serverID"`
 	// SyncID   string // Removed for now
-	Status string
+	Status string `json:"status"`
+	Method string `json:"method"`
 }
 
 // type syncResponce struct {
@@ -62,6 +63,7 @@ func serverSync(id string, res *baseResponce) {
 
 		pongResponce.ServerID = res.ServerID
 		pongResponce.Status = "Pong"
+		pongResponce.Method = "Sync"
 		// pongResponce.SyncID = ServerSyncID
 
 		jsonResponce, err := json.Marshal(pongResponce)
