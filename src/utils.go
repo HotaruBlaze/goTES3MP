@@ -98,7 +98,7 @@ func convertDiscordFormattedItems(str string, gid string) string {
 		}
 		for _, c := range channels {
 			if c.ID == id {
-				return "%" + c.Name
+				return "<%" + c.Name + ">"
 			}
 		}
 
@@ -114,9 +114,9 @@ func convertDiscordFormattedItems(str string, gid string) string {
 			return s
 		}
 		if member.Nick != "" {
-			return member.Nick
+			return "<@" + member.Nick + ">"
 		} else {
-			return member.User.Username
+			return "<@" + member.User.Username + ">"
 		}
 	})
 	str = reMentionRole.ReplaceAllStringFunc(str, func(s string) string {
@@ -129,7 +129,7 @@ func convertDiscordFormattedItems(str string, gid string) string {
 		}
 		for _, r := range roles {
 			if r.ID == id {
-				return "@" + r.Name
+				return "<%@" + r.Name + ">"
 			}
 		}
 		return s
