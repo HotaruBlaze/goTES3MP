@@ -12,13 +12,14 @@ import (
 var ServerID string
 
 // var registrationToken
-type serverSyncResponce struct {
-	ServerID string
+type serverSyncresponse struct {
+	ServerID string `json:"serverID"`
 	// SyncID   string // Removed for now
-	Status string
+	Status string `json:"status"`
+	Method string `json:"method"`
 }
 
-// type syncResponce struct {
+// type syncresponse struct {
 // 	Serverid string `json:"serverid"`
 // 	// SyncID             string `json:"SyncID"`
 // 	MaxPlayers         int  `json:"MaxPlayers"`
@@ -28,7 +29,7 @@ type serverSyncResponce struct {
 // 	// Status string `json:"Status"`
 // }
 
-func serverSync(id string, res *baseResponce) {
+func serverSync(id string, res *baseresponse) {
 	// We dont have any server saved, lets attempt to register the server.
 	if viper.GetViper().GetString("tes3mp.serverid") == "" {
 		if id != "" {
@@ -44,7 +45,7 @@ func serverSync(id string, res *baseResponce) {
 			)
 		}
 	}
-	// var syncRes syncResponce
+	// var syncRes syncresponse
 	if len(ServerID) == 0 {
 		ServerID = res.Data["ServerID"]
 	}
@@ -58,16 +59,17 @@ func serverSync(id string, res *baseResponce) {
 			checkError("MaxPlayersSync", err)
 		}
 
-		var pongResponce serverSyncResponce
+		var pongresponse serverSyncresponse
 
-		pongResponce.ServerID = res.ServerID
-		pongResponce.Status = "Pong"
-		// pongResponce.SyncID = ServerSyncID
+		pongresponse.ServerID = res.ServerID
+		pongresponse.Status = "Pong"
+		pongresponse.Method = "Sync"
+		// pongresponse.SyncID = ServerSyncID
 
-		jsonResponce, err := json.Marshal(pongResponce)
-		checkError("pongResponce", err)
+		jsonresponse, err := json.Marshal(pongresponse)
+		checkError("pongresponse", err)
 
-		pongResponceMsg := bytes.NewBuffer(jsonResponce).String()
-		IRCSendMessage(systemchannel, pongResponceMsg)
+		pongresponseMsg := bytes.NewBuffer(jsonresponse).String()
+		IRCSendMessage(systemchannel, pongresponseMsg)
 	}
 }

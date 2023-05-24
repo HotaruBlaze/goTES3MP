@@ -1,8 +1,5 @@
 local cjson = require("cjson")
-GoTES3MP_DiscordChannel = ""
-GoTES3MP_DiscordServer = ""
 -- GoTES3MPSyncID = ""
-GOTES3MPServerID = ""
 WaitingForSync = false
 local goTES3MP = {}
 local TES3MPOnline = false 
@@ -12,23 +9,17 @@ local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPSync = require("custom.goTES3MP.sync")
 local goTES3MPChat = require("custom.goTES3MP.chat")
 local goTES3MPVPNCheck = require("custom.goTES3MP.vpnChecker")
+local goTES3MPConfig = require("custom.goTES3MP.config")
 
-goTES3MP.defaultConfig = {
-    serverid = "",
-    discordchannel = "",
-    discordalerts = "",
-    discordserver = ""
-}
 
-goTES3MP.config = DataManager.loadData("goTES3MP", goTES3MP.defaultConfig)
+local config = goTES3MPConfig.GetConfig()
 
 goTES3MP.GetServerID = function()
-    if GOTES3MPServerID == "" then
-        GOTES3MPServerID = goTES3MPUtils.randomString(16) 
-        goTES3MP.config.serverid = GOTES3MPServerID
+    if config.goTES3MP.serverid == "" then
+        config.goTES3MP.serverid = goTES3MPUtils.randomString(16) 
         DataManager.saveData("goTES3MP", goTES3MP.config)
     end
-    return GOTES3MPServerID
+    return config.goTES3MP.serverid
 end
 
 -- goTES3MP.GetSyncID = function()
@@ -38,63 +29,47 @@ end
 --     return GoTES3MPSyncID
 -- end
 
-goTES3MP.GetDiscordChannel = function()
-    return GoTES3MP_DiscordChannel
-end
-goTES3MP.GetDiscordServer = function()
-    return GoTES3MP_DiscordServer
+goTES3MP.GetDefaultDiscordChannel = function()
+    return config.goTES3MP.defaultDiscordChannel
 end
 
+goTES3MP.GetDefaultDiscordNotificationsChannel = function()
+    return config.goTES3MP.defaultDiscordNotifications
+end
+
+goTES3MP.GetDefaultDiscordServer = function()
+    return config.goTES3MP.defaultDiscordServer
+end
 
 customEventHooks.registerValidator(
-    "OnServerPostInit",
+    "OnServerInit",
     function()
+        goTES3MPConfig.LoadConfig()
         goTES3MP.GetServerID()
-        -- goTES3MP.GetSyncID()
-        GoTES3MP_DiscordServer = goTES3MP.config.discordserver
-        GoTES3MP_DiscordChannel = goTES3MP.config.discordchannel
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: Loaded")
     end
 )
 
-customEventHooks.registerHandler("OnServerInit", function(eventStatus, pid)
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = GOTES3MPServerID,
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = goTES3MP.config.discordalerts,
-			server = GoTES3MP_DiscordServer,
-			message = "**".."[TES3MP] Server is online. :yellow_heart:".."**"
-        }
-    }
+customEventHooks.registerHandler("OnServerPostInit", function(eventStatus, pid)
     if TES3MPOnline == false then
-        local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-        if responce ~= nil then
-            IrcBridge.SendSystemMessage(responce)
-        end
+        goTES3MPUtils.sendDiscordMessage(
+            config.goTES3MP.serverid,
+            config.goTES3MP.defaultDiscordNotifications,
+            config.goTES3MP.defaultDiscordServer,
+            "**".."[TES3MP] Server is online. :yellow_heart:".."**"
+        )
         TES3MPOnline = true
     end
 end)
 
-customEventHooks.registerValidator("OnServerExit", function(eventStatus, pid)
-    local messageJson = {
-        method = "rawDiscord",
-        source = "TES3MP",
-        serverid = GOTES3MPServerID,
-        syncid = GoTES3MPSyncID,
-        data = {
-            channel = goTES3MP.config.discordalerts,
-			server = GoTES3MP_DiscordServer,
-			message = "**".."[TES3MP] Server is offline. :warning:".."**"
-        }
-    }
-    local responce = goTES3MPUtils.isJsonValidEncode(messageJson)
-    if responce ~= nil then
-        IrcBridge.SendSystemMessage(responce)
-    end
+customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
+    goTES3MPUtils.sendDiscordMessage(
+        config.goTES3MP.serverid,
+        config.goTES3MP.defaultDiscordNotifications,
+        config.goTES3MP.defaultDiscordServer,
+        "**".."[TES3MP] Server is offline. :warning:".."**"
+    )
 end)
-
 
 customCommandHooks.registerCommand("forceSync", function(pid) 
     goTES3MPSync.SendSync(true)

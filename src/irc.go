@@ -48,7 +48,7 @@ func InitIRC() {
 	irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
 		go func(event *irc.Event) {
 			if event.Arguments[0] == systemchannel {
-				var baseMsg baseResponce
+				var baseMsg baseresponse
 				err := json.Unmarshal([]byte(event.Message()), &baseMsg)
 				if err != nil {
 					checkError("[IRC:AddCallback]: PRIVMSG", err)

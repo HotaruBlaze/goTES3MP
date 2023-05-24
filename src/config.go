@@ -22,6 +22,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("discord.commandPrefix", "!")
 	viper.SetDefault("printMemoryInfo", false)
+	viper.SetDefault("enableInteractiveConsole", true)
 
 	viper.SetDefault("irc.enableChatChannel", false)
 	viper.SetDefault("irc.server", "127.0.0.1")
@@ -42,6 +43,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
+	viper.SetDefault("discord.userroles", []string{})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -50,7 +52,7 @@ func LoadConfig() (ConfigLoaded bool) {
 				log.Errorln("[Config]", "Failed to write Config: ", err)
 			}
 			log.Infoln("[Viper]", "Created default config")
-			os.Exit(1)
+			os.Exit(0)
 		} else {
 			log.Errorf("[Viper]", "Fatal error reading config file: %v", err)
 			panic(1)

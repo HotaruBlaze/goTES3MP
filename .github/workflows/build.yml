@@ -2,7 +2,7 @@ name: Build
 
 on:
   release:
-    types: [released]
+    types: [published]
 
 env:
   IMAGE_REGISTRY: ghcr.io
@@ -14,30 +14,34 @@ jobs:
     name: Build Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Go 1.x
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ^1.20
           stable: true
         id: linux-build
       - name: Build-Linux
         run: go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux src/*.go
+      - name: Generate default config
+        run: cd build/ &&chmod +x goTES3MP-Linux && ./goTES3MP-Linux
 
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/goTES3MP-Linux
+          files: |
+            build/goTES3MP-Linux
+            build/config.yaml
 
   build-windows:
     name: Build Windows
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Go 1.x
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ^1.20
           stable: true
@@ -56,10 +60,10 @@ jobs:
     name: Add Scripts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Compress scripts
-        uses: papeloto/action-zip@v1
+        uses: papeloto/action-zip@v1.1
         with:
           files: tes3mp/
           dest: build/tes3mp-scripts.zip
@@ -78,7 +82,7 @@ jobs:
       env:
         DOCKER_CONFIG: $HOME/.docker
       steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
 
         - name: Set up Docker Buildx
           id: buildx

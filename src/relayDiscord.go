@@ -30,12 +30,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.ChannelID != viper.GetString("discord.serverchat") {
 		return
 	}
-	var discordResponce baseResponce
+	var discordresponse baseresponse
 
-	discordResponce.ServerID = viper.GetViper().GetString("tes3mp.serverid")
-	discordResponce.Method = "DiscordChat"
-	discordResponce.Source = "Discord"
-	discordResponce.Target = "TES3MP"
+	discordresponse.ServerID = viper.GetViper().GetString("tes3mp.serverid")
+	discordresponse.Method = "DiscordChat"
+	discordresponse.Source = "Discord"
+	discordresponse.Target = "TES3MP"
 	var user, message string
 
 	if !allowcolorhexusage(m.Message) {
@@ -43,6 +43,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	} else {
 		message = m.Content
 	}
+
+	// Convert all <@ >, <# >, and similarly formatted items in Discord messages to something we can actually read.
+	message = convertDiscordFormattedItems(message, m.GuildID)
 
 	// Convert <:example:868167672758693909> to :example:
 	message = filterDiscordEmotes(message)
@@ -76,8 +79,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	}
 
-	discordResponce.Data = discordData
-	processRelayMessage(discordResponce)
+	discordresponse.Data = discordData
+	processRelayMessage(discordresponse)
 }
 
 func getUsersRole(m *discordgo.Message) (string, string) {

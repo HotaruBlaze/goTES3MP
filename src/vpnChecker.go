@@ -5,13 +5,14 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 )
 
 var ipAddressArray []string
 
-type IPHubResponceStruct struct {
+type IPHubresponseStruct struct {
 	IP          string `json:"ip"`
 	CountryCode string `json:"countryCode"`
 	CountryName string `json:"countryName"`
@@ -20,7 +21,7 @@ type IPHubResponceStruct struct {
 	Block       int    `json:"block"`
 }
 
-type ipqualityscoreResponceStruct struct {
+type ipqualityscoreresponseStruct struct {
 	Success        bool    `json:"success"`
 	Message        string  `json:"message"`
 	FraudScore     int     `json:"fraud_score"`
@@ -50,17 +51,31 @@ type ipqualityscoreResponceStruct struct {
 }
 
 func checkPlayerIP(ipAddress string) bool {
+	var wasIPBlocked bool
+
 	if slices.Contains(ipAddressArray, ipAddress) {
 		return true
 	}
-	var wasIPBlocked bool
 
-	wasIPBlocked = ipHubRequest(ipAddress)
-	if wasIPBlocked {
-		return true
+	// If no api keys are set, print out a warning and skip the checks.
+	if len(viper.GetString("vpn.iphub_apikey")) == 0 && len(viper.GetString("vpn.iphub_apikey")) == 0 {
+		log.Warnln("[vpnChecker]: ", "vpnChecker was triggered, however no api keys are currently set. Allowing player to join.")
+		return false
 	}
 
-	wasIPBlocked = ipqualityscoreRequest(ipAddress)
+	// IPHub API Check
+	if len(viper.GetString("vpn.iphub_apikey")) > 0 {
+		wasIPBlocked = ipHubRequest(ipAddress)
+		if wasIPBlocked {
+			return true
+		}
+	}
+
+	// IPQualityScore API Check
+	if len(viper.GetString("vpn.ipqualityscore_apikey")) > 0 {
+		wasIPBlocked = ipqualityscoreRequest(ipAddress)
+	}
+
 	return wasIPBlocked
 }
 
@@ -82,14 +97,14 @@ func ipHubRequest(ipAddress string) bool {
 		checkError("ipHubRequest:3", err)
 	}
 
-	var IPResponce IPHubResponceStruct
-	err = json.Unmarshal(body, &IPResponce)
+	var IPresponse IPHubresponseStruct
+	err = json.Unmarshal(body, &IPresponse)
 	if err != nil {
 		checkError("ipHubRequest:4", err)
 	}
 	defer resp.Body.Close()
 
-	if IPResponce.Block == 1 {
+	if IPresponse.Block == 1 {
 		ipAddressArray = AppendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}
@@ -113,15 +128,15 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		checkError("ipqualityscoreRequest:3", err)
 	}
 
-	var IPResponce ipqualityscoreResponceStruct
-	err = json.Unmarshal(body, &IPResponce)
+	var IPresponse ipqualityscoreresponseStruct
+	err = json.Unmarshal(body, &IPresponse)
 	if err != nil {
 		checkError("ipqualityscoreRequest:4", err)
 	}
 	defer resp.Body.Close()
 
 	// fraud_score
-	if IPResponce.FraudScore >= 80 {
+	if IPresponse.FraudScore >= 80 {
 		ipAddressArray = AppendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}

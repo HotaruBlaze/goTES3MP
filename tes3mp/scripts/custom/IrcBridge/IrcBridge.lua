@@ -9,70 +9,46 @@ require("color")
 local irc = require("irc")
 local cjson = require("cjson")
 
-local goTES3MP = require("custom.goTES3MP.main")
 local goTES3MPSync = require("custom.goTES3MP.sync")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPCommands = require("custom.goTES3MP.commands")
+local goTES3MPConfig = require("custom.goTES3MP.config")
+local goTES3MPVPNChecker = require("custom.goTES3MP.vpnChecker")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v4.0.5-goTES3MP"
+IrcBridge.version = "v5.0.0-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
 
-IrcBridge.defaultConfig = {
-    nick = "",
-    server = "",
-    port = "6667",
-    password = "",
-    nspasswd = "",
-    systemchannel = "#",
-    nickfilter = "",
-    discordColor = "#825eed",
-    ircColor = "#5D9BEE"
-}
+local config = goTES3MPConfig.GetConfig()
 
-IrcBridge.config = DataManager.loadConfiguration(IrcBridge.scriptName, IrcBridge.defaultConfig)
-
-if (IrcBridge.config == IrcBridge.defaultConfig) then
-    tes3mp.LogMessage(enumerations.log.WARN, "IrcBridge configuration has been generated,")
-    tes3mp.StopServer(0)
-end
-
-if (IrcBridge.config.nick == "" or IrcBridge.config.systemchannel == "" or IrcBridge.config.systemchannel == "#") then
+if (config.IRCBridge.nick == "" or config.IRCBridge.systemchannel == "" or config.IRCBridge.systemchannel == "#") then
     tes3mp.LogMessage(
         enumerations.log.ERROR,
-        "IrcBridge has not been configured correctly." .. "\n" .. "nick, server, and systemchannel are required."
+        "IrcBridge has not been configured correctly."
     )
     tes3mp.StopServer(0)
 end
 
-local nick = IrcBridge.config.nick
-local server = IrcBridge.config.server
-local nspasswd = IrcBridge.config.nspasswd
-local password = IrcBridge.config.password
-local systemchannel = IrcBridge.config.systemchannel
-local nickfilter = IrcBridge.config.nickfilter
-local discordColor = IrcBridge.config.discordColor
-local ircColor = IrcBridge.config.ircColor
-local port = IrcBridge.config.port
 IRCTimerId = nil
 
-local s = irc.new {nick = nick}
-if password ~= "" then
+local s = irc.new {nick = config.IRCBridge.nick}
+if config.IRCBridge.password ~= "" then
     s:connect(
         {
-            host = server,
-            port = port,
-            password = password,
+            host = config.IRCBridge.server,
+            port = config.IRCBridge.port,
+            password = config.IRCBridge.password,
             timeout = 120,
             secure = false
         }
     )
 else
-    s:connect(server, port)
+    s:connect(config.IRCBridge.server, config.IRCBridge.port)
 end
-nspasswd = "identify " .. nspasswd
+local nspasswd = "identify " .. config.IRCBridge.nspasswd
+local systemchannel = config.IRCBridge.systemchannel
 s:sendChat("NickServ", nspasswd)
 s:join(systemchannel)
 local lastMessage = ""
@@ -86,48 +62,26 @@ IrcBridge.RecvMessage = function()
                     print("IRCDebug: " .. message)
                 end
 
-                local responce = goTES3MPUtils.isJsonValidDecode(message)
-                -- Unfinishedd
-                if responce.Status == "Pong" and WaitingForSync then
-                    goTES3MPSync.GotSync(responce.ServerID, responce.SyncID)
-                end
-                if
-                    responce.method == "Command" and responce.data["replyChannel"] ~= nil and
-                        responce.data["Command"]
-                 then
-                    goTES3MPCommands.main(responce.data["TargetPlayer"],responce.data["Command"],responce.data["CommandArgs"], responce.data["replyChannel"])
-                end
-                if responce.method == "DiscordChat" or responce.method == "IRC" then
-                    for pid, player in pairs(Players) do
-                        if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
-                            IrcBridge.ChatMessage(pid, responce)
-                        end
-                    end
-                end
-                if responce.method == "VPNCheck" then
-                    if responce.data["kickPlayer"] ~= nil and responce.data["kickPlayer"] == "yes" then
-                        pid = responce.data["playerpid"]
-                        if tes3mp.GetName(pid) ~= nil then
-                            playerName = tes3mp.GetName(pid)
-                            tes3mp.SendMessage(pid, playerName .. " was kicked for trying to use a VPN.\n", true, false)
-                            tes3mp.Kick(pid)
+                local response = goTES3MPUtils.isJsonValidDecode(message)
 
-                            local messageJson = {
-                                method = "rawDiscord",
-                                source = "TES3MP",
-                                serverid = GOTES3MPServerID,
-                                syncid = GoTES3MPSyncID,
-                                data = {
-                                    channel = GoTES3MP_DiscordChannel,
-                                    server = GoTES3MP_DiscordServer,
-                                    message = "**"..playerName.." was kicked for trying to connect with a VPN.".."**"
-                                }
-                            }
-
-                            IrcBridge.SendSystemMessage(cjson.encode(messageJson))
-                        end
-                    end
-                end
+                IrcBridge.switch(response.method) {
+                    ["Sync"] = function()
+                        goTES3MPSync.GotSync(response.ServerID, response.SyncID)
+                    end,
+                    ["Command"] = function()
+                        goTES3MPCommands.processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
+                    end,
+                    ["DiscordChat"] = function()
+                        IrcBridge.chatMessage(response)
+                    end,
+                    ["VPNCheck"] = function()
+                        goTES3MPVPNChecker.kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
+                    end,
+                    default = function()
+                        print("Error: "..tableHelper.getSimplePrintableTable(response))
+                        print("Unknown method (" .. response.method .. ") was received.")
+                    end,
+                }
             end
             lastMessage = message
         end
@@ -136,29 +90,24 @@ IrcBridge.RecvMessage = function()
     tes3mp.RestartTimer(IRCTimerId, time.seconds(1))
 end
 
-IrcBridge.ChatMessage = function(pid, responce)
-    local wherefrom = ""
-    if responce.method == "DiscordChat" then
-        wherefrom = discordColor .. "[" .. responce.source .. "]" .. color.Default
-    elseif responce.method == "IRC" then
-        wherefrom = ircColor .. "[" .. responce.source .. "]" .. color.Default
-    else
-        wherefrom = color.Default .. "[" .. responce.source .. "]" .. color.Default
+IrcBridge.chatMessage = function(response)
+    local wherefrom = color.Default .. "[" .. response.source .. "]" .. color.Default
+    local finalMessage = ""
+
+    if response.method == "DiscordChat" then
+        wherefrom = config.IRCBridge.discordColor .. "[" .. response.source .. "]" .. color.Default
     end
 
-    if responce.data["RoleColor"] ~= "" and responce.data["RoleColor"] ~= "" then
-        local staffRole = "#" .. responce.data["RoleColor"] .. "[" .. responce.data["RoleName"] .. "]" .. color.Default
-        tes3mp.SendMessage(
-            pid,
-            wherefrom .. " " .. staffRole .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n",
-            false
-        )
+    if response.data["RoleColor"] ~= "" and response.data["RoleColor"] ~= "" then
+        local staffRole = "#" .. response.data["RoleColor"] .. "[" .. response.data["RoleName"] .. "]" .. color.Default
+        finalMessage = wherefrom .. " " .. staffRole .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
     else
-        tes3mp.SendMessage(
-            pid,
-            wherefrom .. " " .. responce.data["User"] .. ": " .. responce.data["Message"] .. "\n",
-            false
-        )
+        finalMessage = wherefrom .. " " .. response.data["User"] .. ": " .. response.data["Message"] .. "\n"
+    end
+    for pid, player in pairs(Players) do
+        if Players[pid] ~= nil and Players[pid]:IsLoggedIn() then
+            tes3mp.SendMessage(pid, finalMessage, false)
+        end
     end
 end
 
@@ -174,16 +123,24 @@ function OnIRCUpdate()
     s:think()
 end
 
-customEventHooks.registerValidator(
-    "OnServerInit",
-    function()
-        IRCTimerId = tes3mp.CreateTimer("OnIRCUpdate", time.seconds(1))
+-- Yes, i swapped out the chain of if statements for a switch statement, the performance loss is minimal 
+-- however it severely increases code readability
+IrcBridge.switch = function(value)
+    return function(cases)
+        local case = cases[value] or cases.default
+        if case then
+            return case(value)
+        else
+            error(string.format("Unhandled case (%s)", value), 2)
+        end
     end
-)
+end
 
 customEventHooks.registerValidator(
     "OnServerInit",
     function()
+        IRCTimerId = tes3mp.CreateTimer("OnIRCUpdate", time.seconds(1))
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:IRCBridge] ".. IrcBridge.version.. " Loaded")
         tes3mp.StartTimer(IRCTimerId)
     end
 )
