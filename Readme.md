@@ -24,6 +24,12 @@ The previous depricated version of this is: [TES3MP_DiscordRelay](https://github
 
 # Methods Documentation found [Here](docs/methods.md)
 
+# One line autoinstall for goTES3MP Requirements (Ubuntu/Debian): [Installer.sh](autoinstaller/ubuntu/autoInstall.sh)
+**Note: This will not auto install TES3MP or setup the TES3MP's lua scripts.**
+```
+curl -fsSL https://raw.githubusercontent.com/HotaruBlaze/goTES3MP/main/autoinstaller/ubuntu/autoInstall.sh | bash
+```
+
 
 # Install Instructions - Standalone
 1. Download the latest build with accompanying tes3mp-scripts.zip 
