@@ -1,0 +1,15 @@
+[Unit]
+Description=goTES3MP Ergo IRC Server
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+User=USERNAME
+WorkingDirectory=/home/USERNAME/goTES3MP/ergo
+ExecStart=/home/USERNAME/goTES3MP/ergo/ergo run
+
+[Install]
+WantedBy=multi-user.target

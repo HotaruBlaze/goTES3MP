@@ -1,0 +1,15 @@
+[Unit]
+Description=Tes3mp Discord Bridge
+After=network.target gotes3mp-ergo.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+User=USERNAME
+WorkingDirectory=/home/USERNAME/goTES3MP
+ExecStart=/home/USERNAME/goTES3MP/goTES3MP-Linux
+
+[Install]
+WantedBy=multi-user.target
