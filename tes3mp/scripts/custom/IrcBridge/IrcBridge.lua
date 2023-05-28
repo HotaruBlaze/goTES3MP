@@ -17,9 +17,10 @@ local goTES3MPVPNChecker = require("custom.goTES3MP.vpnChecker")
 
 local IrcBridge = {}
 
-IrcBridge.version = "v5.0.0-goTES3MP"
+IrcBridge.version = "v5.0.1-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
+IrcBridge.maxMessageLength = 2048
 
 local config = goTES3MPConfig.GetConfig()
 
@@ -112,6 +113,10 @@ IrcBridge.chatMessage = function(response)
 end
 
 IrcBridge.SendSystemMessage = function(message)
+    if string.len(message) > IrcBridge.maxMessageLength then
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:IRCBridge] SendSystemMessage was skipped due to message length exceeding limit.")
+        return
+    end
     if message ~= lastMessage then
         s:sendChat(systemchannel, message)
         lastMessage = message

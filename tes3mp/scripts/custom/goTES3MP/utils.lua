@@ -32,6 +32,11 @@ goTES3MPUtils.isJsonValidDecode = function(json_str)
 end
 
 goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
+    -- Max character limit Discord allows as a single message
+    if string.len(message) > 2000 then
+        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordMessage] message is over the 2000 character limit imposed by discord. Skipping")
+        return
+    end
     local messageJson = {
         method = "rawDiscord",
         source = "TES3MP",
@@ -40,7 +45,7 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
         data = {
             channel = channel,
 			server = server,
-			message =message
+			message = message
         }
     }
     local response = goTES3MPUtils.isJsonValidEncode(messageJson)
@@ -48,7 +53,7 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
     if response ~= nil then
         IrcBridge.SendSystemMessage(response)
     else
-        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordMessage] failed to send message to discord.s")
+        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordMessage] failed to send message to discord.")
     end
 end
 
