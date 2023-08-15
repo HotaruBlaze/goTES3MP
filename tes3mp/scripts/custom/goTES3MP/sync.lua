@@ -1,65 +1,62 @@
-local Sync = {}
-local goTES3MPUtils = require("custom.goTES3MP.utils")
-SyncTimerID = nil
+local goTES3MPModules = nil
 
--- SyncTimer: In seconds
-local SyncTimer = 30
+local goTES3MPSync = {}
+local syncTimerID = nil
 
-local cjson = require("cjson")
+local syncTimer = 30
 
--- Ping GoTES3MP with stats
-Sync.SendSync = function(forceResync)
-    local ServerID = goTES3MP.GetServerID()
-    if goTES3MP.GetServerID() ~= "" then
+goTES3MPSync.sendSync = function(forceResync)
+    local serverID = goTES3MP.GetServerID()
+    if serverID ~= "" then
+        local maxPlayers = tostring(tes3mp.GetMaxPlayers())
+        local currentPlayerCount = tostring(logicHandler.GetConnectedPlayerCount())
+        
         local messageJson = {
-            ServerID = ServerID,
+            ServerID = serverID,
             method = "Sync",
             source = "TES3MP",
             data = {
-                MaxPlayers = tostring(tes3mp.GetMaxPlayers()),
-                CurrentPlayerCount = tostring(logicHandler.GetConnectedPlayerCount()),
+                MaxPlayers = maxPlayers,
+                CurrentPlayerCount = currentPlayerCount,
                 Forced = tostring(forceResync),
-                Status = "Ping",
+                Status = "Ping"
             }
         }
-        local response = goTES3MPUtils.isJsonValidEncode(messageJson)
+        
+        local response = goTES3MPModules["utils"].isJsonValidEncode(messageJson)
         if response ~= nil then
             IrcBridge.SendSystemMessage(response)
         end
-
+        
         WaitingForSync = true
     end
-    tes3mp.RestartTimer(SyncTimerID, time.seconds(SyncTimer))
+    
+    tes3mp.RestartTimer(syncTimerID, time.seconds(syncTimer))
 end
 
-Sync.GotSync = function(ServerID, recievedSyncID)
-    if ServerID == goTES3MP.GetServerID() then
+goTES3MPSync.gotSync = function(serverID, receivedSyncID)
+    if serverID == goTES3MP.GetServerID() then
         WaitingForSync = false
     end
 end
 
-customEventHooks.registerValidator(
-    "OnServerInit",
-    function()
-        if SyncTimerID == nil then
-            SyncTimerID = tes3mp.CreateTimer("OnSyncUpdate", time.seconds(SyncTimer))
-            tes3mp.StartTimer(SyncTimerID)
-            Sync.SendSync(false)
-        end
+customEventHooks.registerValidator("OnServerInit", function()
+    if syncTimerID == nil then
+        goTES3MPModules = goTES3MP.GetModules()
+        syncTimerID = tes3mp.CreateTimer("OnSyncUpdate", time.seconds(syncTimer))
+        tes3mp.StartTimer(syncTimerID)
+        goTES3MPSync.sendSync(false)
     end
-)
+end)
 
-customEventHooks.registerValidator(
-    "OnServerExit",
-    function()
-        if SyncTimerID ~= nil then
-            tes3mp.StopTimer(SyncTimerID)
-        end
+customEventHooks.registerValidator("OnServerExit", function()
+    if syncTimerID ~= nil then
+        tes3mp.StopTimer(syncTimerID)
     end
-)
+end)
 
 function OnSyncUpdate()
-    Sync.SendSync(false)
+    goTES3MPSync.sendSync(false)
 end
 
-return Sync
+return goTES3MPSync

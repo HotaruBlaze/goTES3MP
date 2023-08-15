@@ -1,5 +1,4 @@
 local cjson = require("cjson")
-local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPConfig = {}
 
 local config = {}
@@ -12,6 +11,7 @@ local defaultConfig = {
         defaultDiscordServer = "",
         defaultDiscordChannel = "",
         defaultDiscordNotifications = "",
+        userModules = {},
     },
     IRCBridge = {
         nick = "",

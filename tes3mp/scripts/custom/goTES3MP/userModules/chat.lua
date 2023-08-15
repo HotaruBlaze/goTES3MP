@@ -1,7 +1,8 @@
 local cjson = require("cjson")
-local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPChat = {}
+local goTES3MPModules = goTES3MP.GetModules()
 
+local serverID = ""
 local discordServer = ""
 local discordChannel = ""
 
@@ -13,33 +14,38 @@ customEventHooks.registerValidator(
         -- Get the default configs from goTES3MP
         discordServer = goTES3MP.GetDefaultDiscordServer()
         discordChannel = goTES3MP.GetDefaultDiscordChannel()
+        serverID = goTES3MP.GetServerID()
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:chat] Loaded")
     end
 )
 
+-- Handle player authentication event
 customEventHooks.registerHandler(
     "OnPlayerAuthentified",
     function(eventStatus, pid)
-        goTES3MPUtils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            goTES3MP.GetDefaultDiscordChannel(),
-            goTES3MP.GetDefaultDiscordServer(),
+        goTES3MPModules["utils"].sendDiscordMessage(
+            serverID,
+            discordChannel,
+            discordServer,
             "**" .. "[TES3MP] " .. tes3mp.GetName(pid) .. " has connected" .. "**"
         )
     end
 )
 
+-- Handle player disconnection event
 customEventHooks.registerValidator(
     "OnPlayerDisconnect",
     function(eventStatus, pid)
-        goTES3MPUtils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            goTES3MP.GetDefaultDiscordChannel(),
-            goTES3MP.GetDefaultDiscordServer(),
+        goTES3MPModules["utils"].sendDiscordMessage(
+            serverID,
+            discordChannel,
+            discordServer,
             "**" .. "[TES3MP] " .. tes3mp.GetName(pid) .. " has disconnected" .. "**"
         )
-    end)
+    end
+)
 
+-- Handle player chat message event
 customEventHooks.registerValidator(
     "OnPlayerSendMessage",
     function(eventStatus, pid, message)
@@ -50,10 +56,10 @@ customEventHooks.registerValidator(
             if message:sub(1, 1) == "/" then
                 return
             else
-                goTES3MPUtils.sendDiscordMessage(
-                    goTES3MP.GetServerID(),
-                    goTES3MP.GetDefaultDiscordChannel(),
-                    goTES3MP.GetDefaultDiscordServer(),
+                goTES3MPModules["utils"].sendDiscordMessage(
+                    serverID,
+                    discordChannel,
+                    discordServer,
                     tes3mp.GetName(pid) .. ": " .. message
                 )
             end
@@ -61,6 +67,7 @@ customEventHooks.registerValidator(
     end
 )
 
+-- Handle player death event
 customEventHooks.registerValidator(
     "OnPlayerDeath",
     function(eventStatus, pid)
@@ -69,18 +76,22 @@ customEventHooks.registerValidator(
 
         if tes3mp.DoesPlayerHavePlayerKiller(pid) then
             local killerPid = tes3mp.GetPlayerKillerPid(pid)
-            if pid ~= killerPid then deathReason = "was killed by player " .. Players[killerPid].name end
+            if pid ~= killerPid then
+                deathReason = "was killed by player " .. Players[killerPid].name
+            end
         else
             local killerName = tes3mp.GetPlayerKillerName(pid)
-            if killerName ~= "" then deathReason = "was killed by " .. killerName end
+            if killerName ~= "" then
+                deathReason = "was killed by " .. killerName
+            end
         end
 
         deathReason = playerName .. " " .. deathReason
 
-        goTES3MPUtils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            goTES3MP.GetDefaultDiscordChannel(),
-            goTES3MP.GetDefaultDiscordServer(),
+        goTES3MPModules["utils"].sendDiscordMessage(
+            serverID,
+            discordChannel,
+            discordServer,
             "***" .. deathReason .. "***"
         )
     end
