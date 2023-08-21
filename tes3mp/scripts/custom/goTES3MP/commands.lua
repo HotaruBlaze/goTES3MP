@@ -47,10 +47,10 @@ local commandHandlers = {
             goTES3MPModules["getPlayers"].getPlayers(discordReplyChannel)
         end
     },
-    ["getJournal"] = {
+    ["getjournal"] = {
         description = "Get a player's Journal Entry",
         handler = function(player, commandArgs, discordReplyChannel)
-            goTES3MPModules["getJournal"].GetJournalEntries(player, commandArgs, discordReplyChannel)
+            goTES3MPModules["getJournal"].GetJournalEntrys(player, commandArgs, discordReplyChannel)
         end
     },
 }
@@ -76,7 +76,7 @@ commands.processCommand = function(player, command, commandArgs, discordReplyCha
         tes3mp.LogMessage(enumerations.log.WARN, "[Discord]: processCommand triggered with blank command.")
         return
     end
-
+    local command = string.lower(command)
     if player ~= nil then
         if string.byte(player:sub(1, 1)) == 34 then
             player = player:sub(2, string.len(player) - 1)
