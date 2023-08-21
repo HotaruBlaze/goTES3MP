@@ -105,5 +105,21 @@ commands.SendResponse = function(discordReplyChannel)
     goTES3MPModules["utils"].sendDiscordMessage(goTES3MP.GetServerID(), discordReplyChannel, goTES3MP.GetDefaultDiscordServer(), "**Command Executed**")
 end
 
+-- Running this before a player connects, will cause a tes3mp crash
+-- tes3mp.GetLastPlayerId() crashes if a player hasnt connected since server start.
+commands.getPlayerPID = function(str)
+    local lastPid = tes3mp.GetLastPlayerId()
+    if str ~= nil then
+        for playerIndex = 0, lastPid do
+            if Players[playerIndex] ~= nil and Players[playerIndex]:IsLoggedIn() then
+                if string.lower(Players[playerIndex].name) == string.lower(str) then
+                    return playerIndex
+                end
+            end
+        end
+    end
+    return nil
+end
+
 
 return commands
