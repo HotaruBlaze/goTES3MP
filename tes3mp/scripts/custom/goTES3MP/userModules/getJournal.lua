@@ -1,61 +1,54 @@
-local cjson = require("cjson")
-local goTES3MPModules = goTES3MP.GetModules()
-
 local getJournal = {}
+local cjson = require("cjson")
+local goTES3MPUtils = require("custom.goTES3MP.utils")
 
-getJournal.GetJournalEntries = function(playerName, questID, discordReplyChannel)
+getJournal.GetJournalEntrys = function(playerName, questID, discordReplyChannel)
+    local questIndexs = {}
     local player = logicHandler.GetPlayerByName(playerName)
+    if player ~= nil then
+        for _, quest in pairs(player.data.journal) do
+            if string.lower(quest.quest) == string.lower(questID) then
+                table.insert(questIndexs, quest.index)
+            end
+        end
+        if #questIndexs == 0 then
+            goTES3MPUtils.sendDiscordMessage(
+                goTES3MP.GetServerID(),
+                discordReplyChannel,
+                goTES3MP.GetDefaultDiscordServer(),
+                "**Quest ID is invalid or player does not have this Quest.**"
+            )
+            return
+        end
 
-    if player == nil then
-        goTES3MPModules["utils"].sendDiscordMessage(
+        questIndexs = goTES3MPUtils.alphanumsort(questIndexs)
+        questList =
+            "**" .. playerName .. "'s Journal entry's for " .. '"' .. string.lower(questID) .. '"' .. "**" .. "\n"
+        questList = questList .. "```" .. "\n"
+
+        for i, index in pairs(questIndexs) do
+            if i == #questIndexs then
+                questList = questList .. index .. "\n"
+            else
+                questList = questList .. index .. ","
+            end
+        end
+        questList = questList .. "```"
+
+        goTES3MPUtils.sendDiscordMessage(
             goTES3MP.GetServerID(),
             discordReplyChannel,
             goTES3MP.GetDefaultDiscordServer(),
-            "**Player does not exist.**"
+            questList
         )
-        return
-    end
-
-    local questIndexes = {}
-    for _, quest in pairs(player.data.journal) do
-        if string.lower(quest.quest) == string.lower(questID) then
-            table.insert(questIndexes, quest.index)
-        end
-    end
-
-    if #questIndexes == 0 then
-        goTES3MPModules["utils"].sendDiscordMessage(
+    else
+        goTES3MPUtils.sendDiscordMessage(
             goTES3MP.GetServerID(),
             discordReplyChannel,
             goTES3MP.GetDefaultDiscordServer(),
-            "**Quest ID is invalid or player does not have this Quest.**"
+            "**"  .. "Player does not Exist." .. "**"
         )
-        return
     end
-
-    table.sort(questIndexes, goTES3MPModules["utils"].alphanumsort)
-
-    local questList = {
-        "**" .. playerName .. "'s Journal entries for " .. '"' .. string.lower(questID) .. '"' .. "**\n",
-        "```\n"
-    }
-
-    for i, index in ipairs(questIndexes) do
-        if i == #questIndexes then
-            table.insert(questList, index .. "\n")
-        else
-            table.insert(questList, index .. ",")
-        end
-    end
-
-    table.insert(questList, "```")
-
-    goTES3MPModules["utils"].sendDiscordMessage(
-        goTES3MP.GetServerID(),
-        discordReplyChannel,
-        goTES3MP.GetDefaultDiscordServer(),
-        table.concat(questList)
-    )
 end
 
 return getJournal
