@@ -93,7 +93,7 @@ goTES3MPVPNChecker.kickPlayer = function(pid, shouldKickPlayer)
             tes3mp.SendMessage(pid, playerName .. " was kicked for trying to use a VPN.\n", true, false)
             tes3mp.Kick(pid)
 
-            goTES3MPUtils.sendDiscordMessage(
+            goTES3MPModules["utils"].sendDiscordMessage(
                 goTES3MP.GetServerID(),
                 goTES3MP.GetDefaultDiscordChannel(),
                 goTES3MP.GetDefaultDiscordServer(),
