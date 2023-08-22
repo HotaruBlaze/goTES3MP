@@ -7,7 +7,6 @@ local unpack = unpack
 local pairs = pairs
 local assert = assert
 local require = require
-local tonumber = tonumber
 local type = type
 local pcall = pcall
 

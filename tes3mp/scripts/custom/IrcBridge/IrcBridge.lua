@@ -7,16 +7,14 @@
 
 require("color")
 local irc = require("irc")
-local cjson = require("cjson")
 
 local goTES3MPConfig = require("custom.goTES3MP.config")
 local goTES3MPSync = require("custom.goTES3MP.sync")
-local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPModules = nil
 
 local IrcBridge = {}
 
-IrcBridge.version = "v5.0.2-goTES3MP"
+IrcBridge.version = "v5.0.3-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
 IrcBridge.maxMessageLength = 2048
@@ -62,26 +60,27 @@ IrcBridge.RecvMessage = function()
                     print("IRCDebug: " .. message)
                 end
 
-                local response = goTES3MPModules["utils"].isJsonValidDecode(message)
-
-                IrcBridge.switch(response.method) {
-                    ["Sync"] = function()
-                        goTES3MPSync.gotSync(response.ServerID, response.SyncID)
-                    end,
-                    ["Command"] = function()
-                        goTES3MPModules["commands"].processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
-                    end,
-                    ["DiscordChat"] = function()
-                        IrcBridge.chatMessage(response)
-                    end,
-                    ["VPNCheck"] = function()
-                        goTES3MPModules["vpnChecker"].kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
-                    end,
-                    default = function()
-                        print("Error: "..tableHelper.getSimplePrintableTable(response))
-                        print("Unknown method (" .. response.method .. ") was received.")
-                    end,
-                }
+                local response = goTES3MPModules.utils.isJsonValidDecode(message)
+                if response ~= nil then
+                    IrcBridge.switch(response.method) {
+                        ["Sync"] = function()
+                            goTES3MPSync.gotSync(response.ServerID, response.SyncID)
+                        end,
+                        ["Command"] = function()
+                            goTES3MPModules.commands.processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
+                        end,
+                        ["DiscordChat"] = function()
+                            IrcBridge.chatMessage(response)
+                        end,
+                        ["VPNCheck"] = function()
+                            goTES3MPModules.vpnChecker.kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
+                        end,
+                        default = function()
+                            print("Error: "..tableHelper.getSimplePrintableTable(response))
+                            print("Unknown method (" .. response.method .. ") was received.")
+                        end,
+                    }
+                end
             end
             lastMessage = message
         end
