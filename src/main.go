@@ -11,7 +11,6 @@ import (
 
 	"time"
 
-	color "github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -44,16 +43,16 @@ var MultiWrite io.Writer
 var reader *bufio.Reader
 
 func init() {
-	if len(GitCommit) == 0 {
+	if GitCommit == "" {
 		GitCommit = "None"
 	}
-	initLogger()
-	LoadConfig()
-	pdloadData()
+	initializeLogger()
+	loadConfig()
+	loadData()
 }
 func main() {
-	enableDebug := viper.GetBool("debug")
-	if enableDebug {
+	debugEnabled := viper.GetBool("debug")
+	if debugEnabled {
 		log.Warnln("Debug mode is enabled")
 		log.SetLevel(log.DebugLevel)
 	}
@@ -62,9 +61,10 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Infoln("Preforming clean shutdown...")
+		log.Infoln("Performing clean shutdown...")
 		commandShutdown()
 	}()
+
 	if viper.GetBool("webserver.enable") {
 		go InitWebserver()
 	}
@@ -80,11 +80,12 @@ func main() {
 	if viper.GetBool("enableInteractiveConsole") {
 		reader = bufio.NewReader(os.Stdin)
 	}
+
 	getStatus(true, false)
 	for {
-		time.Sleep(2 * 100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
+
 		if viper.GetBool("enableInteractiveConsole") {
-			// TODO: This should be tweaked so ">" is always at the bottom.
 			fmt.Print("> ")
 			command, err := reader.ReadString('\n')
 			if err != nil {
@@ -95,23 +96,23 @@ func main() {
 
 			switch strings.ToLower(args[0]) {
 			case "status":
-				commandStatus()
+				handleStatusCommand()
 			case "reloadirc":
-				commandIrcReconnect()
+				handleReloadIRCCommand()
 			case "reloaddiscord":
-				color.HiBlack("Attempting to reload Discord")
+				log.Debugln("Attempting to reload Discord")
 				InitDiscord()
 			case "exit", "quit", "stop":
-				color.HiBlack("Shutting down...")
+				log.Debugln("Shutting down...")
 				commandShutdown()
 			default:
-				color.Red("[goTES3MP]: " + "Command" + ` "` + command + `" ` + "was not recognised.")
+				log.Warnf("Command \"%s\" was not recognized.", command)
 			}
 		}
 	}
 }
 
-func initLogger() {
+func initializeLogger() {
 	dt := time.Now()
 	ProgramDirectory := "./goTES3MP/logs/"
 	logfileName := ProgramDirectory + "goTES3MP-" + dt.Format("02-01-2006-15_04_05") + ".log"

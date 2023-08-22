@@ -1,50 +1,54 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
 
+// discordCommandHandler handles the command received from Discord.
+// It takes a session and a message create event as parameters.
 func discordCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	Data := make(map[string]string)
-	var commandStruct baseresponse
+	// Split the message content into an array of strings
+	stringArr := strings.Fields(m.Content[1:])
 
-	re := regexp.MustCompile(`[^\s"']+|([^\s"']*"([^"]*)"[^\s"']*)+|'([^']*)`)
-	stringArr := re.FindAllString(m.Content[1:], -1)
-
-	if viper.GetBool("debug") {
-		log.Println("[Debug] discordCommandHandler:stringArr:'", stringArr)
+	// Create a command struct with the necessary fields
+	commandStruct := baseresponse{
+		ServerID: viper.GetViper().GetString("tes3mp.serverid"),
+		Method:   "Command",
+		Source:   "DiscordCommand",
+		Data: map[string]string{
+			"Command": stringArr[0],
+		},
 	}
 
-	commandStruct.ServerID = viper.GetViper().GetString("tes3mp.serverid")
-	commandStruct.Method = "Command"
-	commandStruct.Source = "DiscordCommand"
-	Data["Command"] = stringArr[0]
-
+	// Check if there are additional arguments in the command
 	if len(stringArr) > 1 {
-		Data["TargetPlayer"] = stringArr[1]
+		commandStruct.Data["TargetPlayer"] = stringArr[1]
 		if len(stringArr) > 2 {
-			Data["CommandArgs"] = strings.Join(stringArr[2:], " ")
+			commandStruct.Data["CommandArgs"] = strings.Join(stringArr[2:], " ")
 		}
 	}
 
-	Data["replyChannel"] = m.ChannelID
-	commandStruct.Data = Data
+	// Set the reply channel in the command struct
+	commandStruct.Data["replyChannel"] = m.ChannelID
 
+	// Print debug information if debug mode is enabled
 	if viper.GetBool("debug") {
-		log.Println("[Debug] discordCommandHandler:commandStruct'", Data)
+		log.Println("[Debug] discordCommandHandler:commandStruct'", commandStruct.Data)
 	}
 
+	// Log the executed command
 	log.Println("Staff Member '"+m.Author.Username+"' has executed the following command:", m.Content[1:])
 
+	// Convert the command struct to JSON
 	jsonresponse, err := json.Marshal(commandStruct)
 	checkError("discordCommandHandler", err)
-	sendresponse := bytes.NewBuffer(jsonresponse).String()
+	sendresponse := string(jsonresponse)
+
+	// Send the JSON response to the IRC system channel
 	IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
 }

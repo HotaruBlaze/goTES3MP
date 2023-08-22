@@ -1,5 +1,4 @@
 local cjson = require("cjson")
-local goTES3MPUtils = require("custom.goTES3MP.utils")
 local goTES3MPConfig = {}
 
 local config = {}
@@ -7,25 +6,28 @@ local configFile = "custom/goTES3MPConfig.json"
 
 local defaultConfig = {
     goTES3MP = {
-        serverid = "",
-        configVersion = 1,
-        defaultDiscordServer = "",
-        defaultDiscordChannel = "",
-        defaultDiscordNotifications = "",
+        serverid = "", -- Server ID
+        configVersion = 1, -- Configuration version
+        defaultDiscordServer = "", -- Default Discord server
+        defaultDiscordChannel = "", -- Default Discord channel
+        defaultDiscordNotifications = "", -- Default Discord notifications
+        userModules = {}, -- User modules
     },
     IRCBridge = {
-        nick = "",
-        server = "",
-        port = "6667",
-        password = "",
-        nspasswd = "",
-        systemchannel = "#",
-        nickfilter = "",
-        discordColor = "#825eed",
-        ircColor = "#5D9BEE"
+        nick = "", -- IRC nickname
+        server = "", -- IRC server
+        port = "6667", -- IRC port
+        password = "", -- IRC password
+        nspasswd = "", -- NS password
+        systemchannel = "#", -- IRC system channel
+        nickfilter = "", -- Nick filter
+        discordColor = "#825eed", -- Discord color
+        ircColor = "#5D9BEE" -- IRC color
     }
 }
 
+--- Retrieves the configuration.
+---@return table - The configuration
 goTES3MPConfig.GetConfig = function()
     if next(config) == nil then
         config = goTES3MPConfig.LoadConfig()
@@ -34,13 +36,18 @@ goTES3MPConfig.GetConfig = function()
     return config
 end
 
-
+--- Saves the configuration to the specified file.
+--- @param config table - The configuration to save.
 goTES3MPConfig.SaveConfig = function(config)
     if config ~= nil then
         jsonInterface.quicksave(configFile, config)
     end
 end
 
+--- Loads the configuration from the file.
+--- If the file doesn't exist, a default configuration is generated.
+--- If a migration is possible, the configuration is migrated.
+--- @return table - The loaded configuration.
 goTES3MPConfig.LoadConfig = function()
     config = jsonInterface.load(configFile)
 
@@ -67,6 +74,9 @@ goTES3MPConfig.LoadConfig = function()
     return config
 end
 
+--- Migrates the configuration from the deprecated DataManager format.
+--- @param config table - The current configuration.
+--- @return table - The migrated configuration.
 goTES3MPConfig.MigrateFromDataManager = function(config)
     -- Config file does not already exist, Lets see if we can migrate
     local dataManagerIRCConfig = jsonInterface.load("custom/__config_IrcBridge.json")
@@ -104,6 +114,9 @@ goTES3MPConfig.MigrateFromDataManager = function(config)
     end
 end
 
+--- Migrates the `goTES3MPData` from the deprecated DataManager format.
+--- @param dataManagerGoTES3MPData table - The `goTES3MPData` from the deprecated DataManager format.
+--- @return table - The migrated `goTES3MPData`.
 goTES3MPConfig.goTES3MPDataMigration = function(currentConfig)
     -- Before a config version was added, we dont need to check the version currently.
     if currentConfig.configVersion == nil or currentConfig.discordchannel ~= nil or currentConfig.discordalerts ~= nil or currentConfig.discordserver ~= nil then

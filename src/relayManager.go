@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -18,73 +18,80 @@ type baseresponse struct {
 }
 
 func processRelayMessage(s baseresponse) bool {
-	var isValid bool
 	res := &s
 	err := processRelayMessageSanityCheck(res)
-
 	if err != nil {
 		log.Errorln("processRelayMessageSanityCheck failed.")
 		log.Errorf("Err %s", err)
 		return false
 	}
+
 	if viper.GetBool("debug") {
 		log.Println("[Debug][processRelayMessage]:", len(res.Data))
 		log.Println(res.Data)
 	}
 
-	if len(res.ServerID) > 0 {
-		if viper.GetBool("debug") {
-			log.Println("[Debug]:", "ServerID found:", res.ServerID)
-		}
-		isValid = true
-	} else {
+	if len(res.ServerID) == 0 {
 		log.Warnln("ServerID Missing from response:")
+		return false
 	}
-	if isValid {
-		switch res.Method {
-		case "Sync":
-			serverSync(res.ServerID, res)
-			return false
-		case "IRC":
-			log.Println("TODO: Method \"IRC\" Not Implemented Yet.")
-			return false
-		case "DiscordChat":
-			jsonresponse, err := json.Marshal(res)
-			checkError("DiscordChat", err)
-			sendresponse := bytes.NewBuffer(jsonresponse).String()
-			IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
-			usrMsg := res.Data["User"] + ": " + res.Data["Message"]
-			logRelayedMessages("Discord", usrMsg)
-		case "rawDiscord":
-			var m rawDiscordStruct
-			m.Channel = res.Data["channel"]
-			m.Server = res.Data["server"]
-			m.Message = res.Data["message"]
-			status := rawDiscordMessage(m)
-			logRelayedMessages("TES3MP", m.Message)
-			return status
-		case "VPNCheck":
-			var m rawDiscordStruct
-			m.Channel = res.Data["channel"]
-			m.Server = res.Data["server"]
-			m.Message = res.Data["message"]
-			isPlayerUsingVPN := checkPlayerIP(m.Message)
-			if isPlayerUsingVPN {
-				log.Println("[VPNCheck]:", m.Message, "has been kicked.")
-				res.Data["kickPlayer"] = "yes"
-			} else {
-				log.Println("[VPNCheck]:", m.Message, "is not suspected to be using a VPN.")
-				res.Data["kickPlayer"] = "no"
-			}
-			jsonresponse, err := json.Marshal(res)
-			checkError("VPNCheck", err)
-			sendresponse := bytes.NewBuffer(jsonresponse).String()
-			IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
-		default:
-			log.Println(res.Method, " is an unknown method.")
-		}
+
+	switch res.Method {
+	case "Sync":
+		serverSync(res.ServerID, res)
+	case "IRC":
+		log.Println("TODO: Method \"IRC\" Not Implemented Yet.")
+	case "DiscordChat":
+		jsonresponse, err := json.Marshal(res)
+		checkError("DiscordChat", err)
+		sendresponse := bytes.NewBuffer(jsonresponse).String()
+		IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
+		usrMsg := res.Data["User"] + ": " + res.Data["Message"]
+		logRelayedMessages("Discord", usrMsg)
+	case "rawDiscord":
+		var m rawDiscordStruct
+		m.Channel = res.Data["channel"]
+		m.Server = res.Data["server"]
+		m.Message = res.Data["message"]
+		status := sendRawDiscordMessage(m)
+		logRelayedMessages("TES3MP", m.Message)
+		return status
+	case "VPNCheck":
+		processVPNCheck(res)
+	default:
+		log.Println(res.Method, " is an unknown method.")
 	}
+
 	return false
+}
+
+// processVPNCheck is a function that processes VPN checks for a given response.
+func processVPNCheck(res *baseresponse) {
+	// Create a rawDiscordStruct from the data in the response
+	m := rawDiscordStruct{
+		Channel: res.Data["channel"],
+		Server:  res.Data["server"],
+		Message: res.Data["message"],
+	}
+
+	// Perform the VPN check on the player's IP
+	isPlayerUsingVPN := checkPlayerIP(m.Message)
+
+	// Set the kickPlayer field in the response data based on the result of the VPN check
+	res.Data["kickPlayer"] = "no"
+	if isPlayerUsingVPN {
+		log.Printf("[VPNCheck]: %s has been kicked.", m.Message)
+		res.Data["kickPlayer"] = "yes"
+	} else {
+		log.Printf("[VPNCheck]: %s is not suspected to be using a VPN.", m.Message)
+	}
+
+	// Convert the response to JSON
+	jsonresponse, err := json.Marshal(res)
+	checkError("VPNCheck", err)
+
+	// Send the JSON response to the IRC system channel
+	IRCSendMessage(viper.GetString("irc.systemchannel"), string(jsonresponse))
 }
 
 func logRelayedMessages(server string, message string) {
@@ -93,14 +100,20 @@ func logRelayedMessages(server string, message string) {
 	}
 }
 
-func processRelayMessageSanityCheck(Rmsg *baseresponse) error {
-	tempRelayMsg := Rmsg
-	// Tried to convert this to a switch, it didnt like it.
-	if tempRelayMsg.Method == "" {
-		return errors.New("processRelayMessage: method cannot be blank")
+// processRelayMessageSanityCheck checks the sanity of the relay message.
+// It ensures that the method is not blank and that data is provided.
+// If any of the checks fail, it returns an error.
+func processRelayMessageSanityCheck(relayMsg *baseresponse) error {
+	// Check if the method is blank
+	if relayMsg.Method == "" {
+		return fmt.Errorf("method cannot be blank")
 	}
-	if len(tempRelayMsg.Data) == 0 {
-		return errors.New("processRelayMessage: No data provided.")
+
+	// Check if data is provided
+	if len(relayMsg.Data) == 0 {
+		return fmt.Errorf("no data provided")
 	}
+
+	// Return nil if all checks pass
 	return nil
 }

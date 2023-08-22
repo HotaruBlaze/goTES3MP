@@ -1,3 +1,4 @@
+-- Utility functions related to various operations in GoTES3MP.
 local goTES3MPUtils = {}
 local cjson = require("cjson")
 
@@ -7,12 +8,18 @@ local charset = {}  do -- [0-9a-zA-Z]
     for c = 97, 122 do table.insert(charset, string.char(c)) end
 end
 
+-- Generates a random string of the specified length using alphanumeric characters.
+---@param length number The length of the random string to generate.
+---@return string The generated random string.
 goTES3MPUtils.randomString = function(length)
     if not length or length <= 0 then return '' end
     math.randomseed(os.clock()^5)
     return goTES3MPUtils.randomString(length - 1) .. charset[math.random(1, #charset)]
 end
 
+-- Validates and decodes a JSON string into a Lua table.
+-- @param json_str The JSON string to decode into a Lua table.
+-- @return The decoded Lua table if successful, or nil if an error occurs.
 goTES3MPUtils.isJsonValidEncode = function(json_table)
     local success, result = pcall(cjson.encode, json_table);
     if success then
@@ -22,6 +29,9 @@ goTES3MPUtils.isJsonValidEncode = function(json_table)
     end  
 end
 
+-- Validates and decodes a JSON string into a Lua table.
+-- @param json_str The JSON string to decode into a Lua table.
+-- @return The decoded Lua table if successful, or nil if an error occurs.
 goTES3MPUtils.isJsonValidDecode = function(json_str)
     local success, result = pcall(cjson.decode, json_str);
     if success then
@@ -31,6 +41,11 @@ goTES3MPUtils.isJsonValidDecode = function(json_str)
     end  
 end
 
+--- Sends a message to Discord.
+---@param ServerID string The ID of the server.
+---@param channel string The channel to send the message to.
+---@param server string server The target siscord server id.
+---@param message string The message to send to Discord.
 goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
     -- Max character limit Discord allows as a single message
     if string.len(message) > 2000 then
@@ -57,6 +72,9 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
     end
 end
 
+-- Sorts a table in an alphanumeric order.
+---@param o table The table to sort.
+---@return table The sorted table.
 goTES3MPUtils.alphanumsort = function(o)
 	function padnum(d)
 		return ("%03d%s"):format(#d, d)

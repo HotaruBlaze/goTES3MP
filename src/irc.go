@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -33,7 +33,7 @@ func InitIRC() {
 	password = viper.GetString("irc.pass")
 	irccon = irc.IRC(ircNick, ircNick)
 	irccon.Debug = false
-	irccon.Log.SetOutput(ioutil.Discard)
+	irccon.Log.SetOutput(io.Discard)
 	irccon.UseTLS = false
 	irccon.Password = password
 	irccon.AddCallback("001", func(e *irc.Event) {
@@ -85,30 +85,26 @@ func ircReconnect() {
 	}
 	log.Println(tes3mpLogMessage, "[IRC] Module Loading...")
 
-	for {
+	for count < 6 {
 		time.Sleep(10 * time.Second)
-		if count < 6 {
-			currentstatus := irccon.Connected()
-			if !currentstatus {
-				connectedToIRC = false
-				count++
-				err := irccon.Reconnect()
-				if err != nil {
-					log.Fatal(err)
-				} else {
-					connectedToIRC = true
-				}
-			}
-
-			if connectedToIRC && irccon.Connected() {
-				log.Println(tes3mpLogMessage, "[IRC] Module online...")
-				return
+		currentstatus := irccon.Connected()
+		if !currentstatus {
+			connectedToIRC = false
+			count++
+			err := irccon.Reconnect()
+			if err != nil {
+				log.Fatal(err)
+			} else {
+				connectedToIRC = true
 			}
 		}
-		log.Error("Unable to Reconnect to IRC within 60 seconds.")
-		return
-	}
 
+		if connectedToIRC && irccon.Connected() {
+			log.Println(tes3mpLogMessage, "[IRC] Module online...")
+			return
+		}
+	}
+	log.Error("Unable to Reconnect to IRC within 60 seconds.")
 }
 
 // IRCSendMessage : Send message to IRC Channel

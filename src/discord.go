@@ -19,23 +19,27 @@ type discordRole struct {
 // DiscordSession : Global Discord Session
 var DiscordSession *discordgo.Session
 
-// InitDiscord Initialize discordgo
+// InitDiscord initializes the discordgo session
 func InitDiscord() {
-	Discord, err := discordgo.New("Bot " + viper.GetString("discord.token"))
+	// Create a new discordgo session
+	discord, err := discordgo.New("Bot " + viper.GetString("discord.token"))
 	if err != nil {
-		log.Errorln("error creating Discord session,", err)
+		log.Errorln("error creating Discord session:", err)
 		return
 	}
-	defer Discord.Close()
+	defer discord.Close()
 
-	DiscordSession = Discord
-	Discord.AddHandler(messageCreate)
-	Discord.AddHandler(ready)
-	Discord.AddHandler(UpdateDiscordStatus)
+	// Set the global Discord session variable
+	DiscordSession = discord
 
-	err = Discord.Open()
-	if err != nil {
-		log.Errorln("error opening connection,", err)
+	// Add event handlers
+	discord.AddHandler(messageCreate)
+	discord.AddHandler(ready)
+	discord.AddHandler(UpdateDiscordStatus)
+
+	// Open the connection to Discord
+	if err := discord.Open(); err != nil {
+		log.Errorln("error opening connection:", err)
 	}
 }
 
@@ -49,35 +53,54 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 }
 
-func allowcolorhexusage(message *discordgo.Message) bool {
-	allowhexcolors := viper.GetBool("discord.allowcolorhexusage")
-	if allowhexcolors {
+// allowColorHexUsage checks if the usage of color hex codes is allowed.
+// It returns true if hex code usage is allowed or if the user is a staff member.
+func allowColorHexUsage(msg *discordgo.Message) bool {
+	// Check if hex code usage is allowed
+	allowHexColors := viper.GetBool("discord.allowcolorhexusage")
+	if allowHexColors {
 		return true
 	}
 
-	isStaff := isStaffMember(message.Author.ID, message.GuildID)
+	// Check if the user is a staff member
+	isStaff := isStaffMember(msg.Author.ID, msg.GuildID)
 	return isStaff
 }
 
-// UpdateDiscordStatus: Update discord bot status
-func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
-	for {
-		var currentPlayers = strconv.Itoa(CurrentPlayers)
-		var maxPlayers = strconv.Itoa(MaxPlayers)
-		var status = ""
+// UpdateDiscordStatus updates the status of a Discord bot
+func UpdateDiscordStatus(
+	s *discordgo.Session,
+	event *discordgo.Ready,
+) {
+	// Create a ticker that ticks every 5 seconds
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
+	for range ticker.C {
+		// Convert currentPlayers and maxPlayers to strings
+		currentPlayers := strconv.Itoa(CurrentPlayers)
+		maxPlayers := strconv.Itoa(MaxPlayers)
+
+		// Initialize the status string
+		status := ""
+
+		// Get the serverName from the configuration file
 		serverName := viper.GetString("serverName")
 
 		if len(serverName) > 0 {
+			// Add the serverName to the status if it is not empty
 			serverName = serverName + ": "
 			status = serverName + currentPlayers + "/" + maxPlayers
 			status = status + " Players"
 		} else {
+			// Otherwise, only include the currentPlayers and maxPlayers
 			status = currentPlayers + "/" + maxPlayers
 			status = status + " Players"
 		}
 
 		idleSince := 0
+
+		// Create the UpdateStatusData struct
 		usd := discordgo.UpdateStatusData{
 			IdleSince: &idleSince,
 			Activities: []*discordgo.Activity{{
@@ -87,17 +110,18 @@ func UpdateDiscordStatus(s *discordgo.Session, event *discordgo.Ready) {
 			AFK:    false,
 			Status: "online",
 		}
+
 		if s.DataReady {
+			// Update the status using the Discord session
 			err := s.UpdateStatusComplex(usd)
 			if err != nil {
+				// If there is an error, handle it accordingly
 				if err == discordgo.ErrWSNotFound {
 					log.Println("no websocket connection exists, Attempting reconnection in 5 seconds")
-					time.Sleep(5 * time.Second)
 					_ = DiscordSession.Open()
 				}
 				log.Warnln("UpdateDiscordStatus failed to update status.", err)
 			}
-			time.Sleep(5 * time.Second)
 		}
 	}
 }
@@ -126,21 +150,34 @@ func getDiscordRoles(UserID string, GuildID string) []discordRole {
 	return discordRoles
 }
 
+// isStaffMember checks if a user is a staff member based on their roles in a Discord guild.
 func isStaffMember(UserID string, GuildID string) bool {
+	// Get the list of staff roles from the configuration
 	staffRoles := viper.GetStringSlice("discord.staffroles")
+
+	// Get the roles of the user in the specified guild
 	discordRoles := getDiscordRoles(UserID, GuildID)
+
+	// Get the guild information
 	guild, err := DiscordSession.Guild(GuildID)
 	if err != nil {
+		// Log a warning if there was an error fetching the guild information
 		log.Warnln("isStaffMember", "Failed to figure out if a user is a staff member.")
 	}
+
+	// Check if the user is the owner of the guild
 	if UserID == guild.OwnerID {
 		return true
 	}
+
+	// Check if any of the user's roles match the staff roles
 	for _, i := range discordRoles {
 		_, found := FindinArray(staffRoles, i.Name)
 		if found {
 			return true
 		}
 	}
+
+	// Return false if the user is not a staff member
 	return false
 }

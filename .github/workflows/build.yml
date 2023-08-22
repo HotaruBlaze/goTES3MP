@@ -21,6 +21,8 @@ jobs:
           go-version: ^1.20
           stable: true
         id: linux-build
+      - name: Run Tests
+        run: go test ./src/...
       - name: Build-Linux
         run: go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux src/*.go
       - name: Generate default config
@@ -46,6 +48,8 @@ jobs:
           go-version: ^1.20
           stable: true
         id: windows-build
+      - name: Run Tests
+        run: go test ./src
       - name: Build-Windows
         run: GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Windows.exe src/*.go
 
@@ -77,8 +81,6 @@ jobs:
 
   build-dockerImage:
       runs-on: ubuntu-latest
-      # If running with act, Uncomment below
-      # container: phaze9/action-runner
       env:
         DOCKER_CONFIG: $HOME/.docker
       steps:
