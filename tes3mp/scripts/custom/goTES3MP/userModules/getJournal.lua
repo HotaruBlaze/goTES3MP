@@ -1,6 +1,5 @@
 local cjson = require("cjson")
 local goTES3MPUtils = require("custom.goTES3MP.utils")
-local goTES3MP = require("custom.goTES3MP")
 
 local serverID = goTES3MP.GetServerID()
 local discordServer = goTES3MP.GetDefaultDiscordServer()
@@ -8,9 +7,9 @@ local discordServer = goTES3MP.GetDefaultDiscordServer()
 local getJournal = {}
 
 --- Get the journal entries for a player and send them as a message to a Discord channel
----@param playerName string - The name of the player
----@param questID string - The ID of the quest
----@param discordReplyChannel string - The Discord channel to send the journal entries message to
+---@param playerName string The name of the player
+---@param questID string The ID of the quest
+---@param discordReplyChannel string The Discord channel to send the journal entries message to
 getJournal.GetJournalEntries = function(playerName, questID, discordReplyChannel)
     local questIndexs = {}
 
