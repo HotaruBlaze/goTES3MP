@@ -53,7 +53,7 @@ local commandHandlers = {
     ["getjournal"] = {
         description = "Get a player's Journal Entry",
         handler = function(player, commandArgs, discordReplyChannel)
-            goTES3MPModules.getJournal.GetJournalEntrys(player, commandArgs, discordReplyChannel)
+            goTES3MPModules.getJournal.GetJournalEntries(player, commandArgs, discordReplyChannel)
         end
     },
 }
