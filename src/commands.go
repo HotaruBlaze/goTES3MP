@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func commandStatus() {
+func handleStatusCommand() {
 	getStatus(false, true)
 }
 func commandShutdown() {
@@ -20,6 +20,6 @@ func commandShutdown() {
 	os.Exit(0)
 }
 
-func commandIrcReconnect() {
+func handleReloadIRCCommand() {
 	ircReconnect()
 }

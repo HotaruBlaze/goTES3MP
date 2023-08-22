@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ import (
 
 var ipAddressArray []string
 
-type IPHubresponseStruct struct {
+type IPHubResponseStruct struct {
 	IP          string `json:"ip"`
 	CountryCode string `json:"countryCode"`
 	CountryName string `json:"countryName"`
@@ -58,7 +59,7 @@ func checkPlayerIP(ipAddress string) bool {
 	}
 
 	// If no api keys are set, print out a warning and skip the checks.
-	if len(viper.GetString("vpn.iphub_apikey")) == 0 && len(viper.GetString("vpn.iphub_apikey")) == 0 {
+	if len(viper.GetString("vpn.iphub_apikey")) == 0 && len(viper.GetString("vpn.ipqualityscore_apikey")) == 0 {
 		log.Warnln("[vpnChecker]: ", "vpnChecker was triggered, however no api keys are currently set. Allowing player to join.")
 		return false
 	}
@@ -80,8 +81,8 @@ func checkPlayerIP(ipAddress string) bool {
 }
 
 func ipHubRequest(ipAddress string) bool {
-	var webReq = "http://v2.api.iphub.info/ip/" + ipAddress
-	req, err := http.NewRequest("GET", webReq, nil)
+	url := fmt.Sprintf("http://v2.api.iphub.info/ip/%s", ipAddress)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		checkError("ipHubRequest:1", err)
 	}
@@ -91,54 +92,60 @@ func ipHubRequest(ipAddress string) bool {
 	if err != nil {
 		checkError("ipHubRequest:2", err)
 	}
+	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		checkError("ipHubRequest:3", err)
 	}
 
-	var IPresponse IPHubresponseStruct
-	err = json.Unmarshal(body, &IPresponse)
+	var IPResponse IPHubResponseStruct
+	err = json.Unmarshal(body, &IPResponse)
 	if err != nil {
 		checkError("ipHubRequest:4", err)
 	}
-	defer resp.Body.Close()
 
-	if IPresponse.Block == 1 {
-		ipAddressArray = AppendIfMissing(ipAddressArray, ipAddress)
+	if IPResponse.Block == 1 {
+		ipAddressArray = appendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}
 	return false
 }
 
 func ipqualityscoreRequest(ipAddress string) bool {
-	var webReq = "https://ipqualityscore.com/api/json/ip/" + viper.GetString("vpn.ipqualityscore_apikey") + "/" + ipAddress
+	apiKey := viper.GetString("vpn.ipqualityscore_apikey")
+	webReq := fmt.Sprintf("https://ipqualityscore.com/api/json/ip/%s/%s", apiKey, ipAddress)
+
 	req, err := http.NewRequest("GET", webReq, nil)
 	if err != nil {
 		checkError("ipqualityscoreRequest:1", err)
+		return false
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		checkError("ipqualityscoreRequest:2", err)
+		return false
 	}
+	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		checkError("ipqualityscoreRequest:3", err)
+		return false
 	}
 
 	var IPresponse ipqualityscoreresponseStruct
 	err = json.Unmarshal(body, &IPresponse)
 	if err != nil {
 		checkError("ipqualityscoreRequest:4", err)
+		return false
 	}
-	defer resp.Body.Close()
 
-	// fraud_score
 	if IPresponse.FraudScore >= 80 {
-		ipAddressArray = AppendIfMissing(ipAddressArray, ipAddress)
+		ipAddressArray = appendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}
+
 	return false
 }

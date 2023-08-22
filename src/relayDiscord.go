@@ -11,113 +11,87 @@ type rawDiscordStruct struct {
 	Message string `json:"Message"`
 }
 
-func rawDiscordMessage(rawDiscordStruct rawDiscordStruct) bool {
+func sendRawDiscordMessage(rawDiscordStruct rawDiscordStruct) bool {
 	_, err := DiscordSession.ChannelMessageSend(rawDiscordStruct.Channel, rawDiscordStruct.Message)
 	checkError("rawDiscordMessage", err)
 	return true
 }
 
+// messageCreate is a function that handles incoming messages in a Discord server
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID || len(m.Content) == 0 || m.ChannelID != viper.GetString("discord.serverchat") {
 		return
 	}
-	if len(m.Content) > 0 {
-		if m.Content[:1] == viper.GetString("discord.commandprefix") && isStaffMember(m.Author.ID, m.GuildID) {
-			discordCommandHandler(s, m)
-			return
-		}
-	}
-	if m.ChannelID != viper.GetString("discord.serverchat") {
+
+	if m.Content[:1] == viper.GetString("discord.commandprefix") && isStaffMember(m.Author.ID, m.GuildID) {
+		discordCommandHandler(s, m)
 		return
 	}
-	var discordresponse baseresponse
 
-	discordresponse.ServerID = viper.GetViper().GetString("tes3mp.serverid")
-	discordresponse.Method = "DiscordChat"
-	discordresponse.Source = "Discord"
-	discordresponse.Target = "TES3MP"
-	var user, message string
-
-	if !allowcolorhexusage(m.Message) {
-		message = removeRGBHex(m.Content)
-	} else {
-		message = m.Content
+	discordresponse := baseresponse{
+		ServerID: viper.GetViper().GetString("tes3mp.serverid"),
+		Method:   "DiscordChat",
+		Source:   "Discord",
+		Target:   "TES3MP",
 	}
 
-	// Convert all <@ >, <# >, and similarly formatted items in Discord messages to something we can actually read.
+	message := m.Content
+	if !allowColorHexUsage(m.Message) {
+		message = removeRGBHex(message)
+	}
 	message = convertDiscordFormattedItems(message, m.GuildID)
-
-	// Convert <:example:868167672758693909> to :example:
 	message = filterDiscordEmotes(message)
 
 	guildMember, err := s.GuildMember(m.GuildID, m.Message.Author.ID)
 	checkError("[RelayDiscord]: guildMember ", err)
-	hasNickname := guildMember.Nick
-
-	if len(hasNickname) > 0 {
-		user = hasNickname
-	} else {
+	user := guildMember.Nick
+	if user == "" {
 		user = m.Author.Username
 	}
 
-	var discordData map[string]string
 	roleName, roleColor := getUsersRole(m.Message)
-	if len(roleName) > 0 && len(roleColor) > 0 {
-		discordData = map[string]string{
-			"User":      user,
-			"Message":   message,
-			"RoleName":  roleName,
-			"RoleColor": roleColor, // last comma is a must
-		}
-	} else {
-		discordData = map[string]string{
-			"User":      user,
-			"Message":   message,
-			"RoleName":  "",
-			"RoleColor": "", // last comma is a must
-		}
 
+	discordData := map[string]string{
+		"User":      user,
+		"Message":   message,
+		"RoleName":  roleName,
+		"RoleColor": roleColor,
 	}
 
 	discordresponse.Data = discordData
+
 	processRelayMessage(discordresponse)
 }
 
 func getUsersRole(m *discordgo.Message) (string, string) {
 	discordRoles := getDiscordRoles(m.Author.ID, m.GuildID)
-	var userroles []string
 	var allowedUserRole, allowedStaffRole bool
-	index, pos := -1, -1
+	index := -1
+
 	for r, i := range discordRoles {
-		userroles = append(userroles, i.Name)
-		if len(viper.GetViper().GetStringSlice("discord.userroles")) > 0 {
-			discordUserroles := viper.GetViper().GetStringSlice("discord.userroles")
+		discordUserroles := viper.GetViper().GetStringSlice("discord.userroles")
+		if len(discordUserroles) > 0 {
 			_, allowedUserRole = FindinArray(discordUserroles, i.Name)
 		}
 
-		if len(viper.GetViper().GetStringSlice("discord.staffroles")) > 0 {
-			discordStaffroles := viper.GetViper().GetStringSlice("discord.staffroles")
+		discordStaffroles := viper.GetViper().GetStringSlice("discord.staffroles")
+		if len(discordStaffroles) > 0 {
 			_, allowedStaffRole = FindinArray(discordStaffroles, i.Name)
 		}
+
 		if i.Name == persistantData.Users[m.Author.ID] {
 			index = r
-			pos = i.Position
 			break
-		} else {
-			if i.Position > pos && allowedStaffRole {
-				index = r
-				pos = i.Position
-			} else {
-				if i.Position > pos && allowedUserRole {
-					index = r
-					pos = i.Position
-				}
-			}
+		} else if i.Position > discordRoles[index].Position && allowedStaffRole {
+			index = r
+		} else if i.Position > discordRoles[index].Position && allowedUserRole {
+			index = r
 		}
 	}
+
 	if index == -1 {
 		return "", ""
-	} else {
-		return discordRoles[index].Name, discordRoles[index].Color
 	}
+
+	return discordRoles[index].Name, discordRoles[index].Color
 }
