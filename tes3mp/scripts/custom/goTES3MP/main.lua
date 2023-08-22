@@ -37,15 +37,15 @@ local function getLuaModulesFromFolder(folderPath)
     end
 
     local fileHandle = io.popen(command)
+    local commandOutput = fileHandle:read("*a") -- Read the entire output
 
-    if fileHandle then
-        for filename in fileHandle:lines() do
+    if fileHandle:close() then
+        for filename in commandOutput:gmatch("[^\r\n]+") do
             local moduleName = filename:match("(.+)%.lua$")
             if moduleName then
                 table.insert(luaFiles, moduleName)
             end
         end
-        fileHandle:close()
     else
         print("Failed to execute command: " .. command)
     end
