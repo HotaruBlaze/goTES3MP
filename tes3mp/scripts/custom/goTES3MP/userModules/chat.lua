@@ -23,7 +23,7 @@ customEventHooks.registerValidator(
 customEventHooks.registerHandler(
     "OnPlayerAuthentified",
     function(eventStatus, pid)
-        goTES3MPModules["utils"].sendDiscordMessage(
+        goTES3MPModules.utils.sendDiscordMessage(
             serverID,
             discordChannel,
             discordServer,
@@ -36,7 +36,7 @@ customEventHooks.registerHandler(
 customEventHooks.registerValidator(
     "OnPlayerDisconnect",
     function(eventStatus, pid)
-        goTES3MPModules["utils"].sendDiscordMessage(
+        goTES3MPModules.utils.sendDiscordMessage(
             serverID,
             discordChannel,
             discordServer,
@@ -56,7 +56,7 @@ customEventHooks.registerValidator(
             if message:sub(1, 1) == "/" then
                 return
             else
-                goTES3MPModules["utils"].sendDiscordMessage(
+                goTES3MPModules.utils.sendDiscordMessage(
                     serverID,
                     discordChannel,
                     discordServer,
@@ -88,7 +88,7 @@ customEventHooks.registerValidator(
 
         deathReason = playerName .. " " .. deathReason
 
-        goTES3MPModules["utils"].sendDiscordMessage(
+        goTES3MPModules.utils.sendDiscordMessage(
             serverID,
             discordChannel,
             discordServer,

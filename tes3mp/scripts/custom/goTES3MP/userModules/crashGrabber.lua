@@ -17,7 +17,7 @@ customEventHooks.registerValidator(
         
         if crashReason then
             tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:crashGrabber]: Previous crash was due to\n - "..crashReason)
-            goTES3MPModules["utils"].sendDiscordMessage(
+            goTES3MPModules.utils.sendDiscordMessage(
                 serverID,
                 discordChannel,
                 discordServer,
@@ -29,18 +29,34 @@ customEventHooks.registerValidator(
     end
 )
 
+--- Generate a crash message
+---@param crashReason string - The reason for the crash
+---@return string - The formatted crash message
 function crashGrabber.generateCrashMessage(crashReason)
     return string.format("### Server Crash Detected\n```\n%s\n```", crashReason)
 end
 
-
+--- Get the second newest file in the log folder
+---@param LogFolder string - The path to the log folder
+---@return string - The name of the second newest log file
 crashGrabber.getSecondNewestFile = function(LogFolder)
     local newestFile = nil
     local secondNewestFile = nil
     local newestTimestamp = 0
     local secondNewestTimestamp = 0
 
-    for file in io.popen('ls -lt "' .. LogFolder .. '"'):lines() do
+    if package.config:sub(1,1) == '\\' then
+        -- Windows
+        command = 'dir /B "' .. LogFolder .. '"'
+    else
+        -- Linux
+        command = 'ls -lt "' .. LogFolder .. '"'
+    end
+
+    local fileHandle = io.popen(command)
+
+
+    for file in io.popen(command):lines() do
         local filename = file:match("tes3mp%-server%-%d%d%d%d%-%d%d%-%d%d%-%d%d_%d%d_%d%d%.log")
         if filename then
             local timestamp = os.time { year = filename:sub(15, 18), month = filename:sub(20, 21), day = filename:sub(23, 24), hour = filename:sub(26, 27), min = filename:sub(29, 30), sec = filename:sub(32, 33) }
@@ -60,7 +76,9 @@ crashGrabber.getSecondNewestFile = function(LogFolder)
     return secondNewestFile
 end
 
-
+--- Read errors from a log file
+---@param file userdata - The file handle of the log file
+---@return table - An array of captured errors
 crashGrabber.readErrorsFromLog = function(file)
     local capturedErrors = {}
     local pattern = "%[(%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d)%] %[(ERR)%]: .-"
@@ -75,6 +93,8 @@ crashGrabber.readErrorsFromLog = function(file)
     return capturedErrors
 end
 
+--- Get the previous error from the log files
+---@return string|nil - The path of the file containing the previous error, or nil if no error is found
 crashGrabber.getPreviousError = function()
     local errorLog = crashGrabber.getSecondNewestFile(LogFolder)
 

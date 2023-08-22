@@ -1,7 +1,10 @@
 local commands = {}
 local goTES3MPModules = goTES3MP.GetModules()
 
--- Command handlers with descriptions
+---@class CommandHandler
+---@field description string
+---@field handler fun(player: string, commandArgs: string[], discordReplyChannel: string)
+---@type table<string, CommandHandler>
 local commandHandlers = {
     ["kickplayer"] = {
         description = "Kicks the specified player from the tes3mp server.",
@@ -44,17 +47,20 @@ local commandHandlers = {
     ["players"] = {
         description = "List Players",
         handler = function(player, commandArgs, discordReplyChannel)
-            goTES3MPModules["getPlayers"].getPlayers(discordReplyChannel)
+            goTES3MPModules.getPlayers.getPlayers(discordReplyChannel)
         end
     },
     ["getjournal"] = {
         description = "Get a player's Journal Entry",
         handler = function(player, commandArgs, discordReplyChannel)
-            goTES3MPModules["getJournal"].GetJournalEntrys(player, commandArgs, discordReplyChannel)
+            goTES3MPModules.getJournal.GetJournalEntrys(player, commandArgs, discordReplyChannel)
         end
     },
 }
 -- Define the !help command handler separately
+---@param player string
+---@param commandArgs table
+---@param discordReplyChannel string
 local helpHandler = function(player, commandArgs, discordReplyChannel)
     local commandList = "Available commands:\n"
     for cmd, data in pairs(commandHandlers) do
@@ -62,7 +68,7 @@ local helpHandler = function(player, commandArgs, discordReplyChannel)
     end
     commandList = "```\n" .. commandList .. "```"
     
-    goTES3MPModules["utils"].sendDiscordMessage(goTES3MP.GetServerID(), discordReplyChannel, goTES3MP.GetDefaultDiscordServer(), commandList)
+    goTES3MPModules.utils.sendDiscordMessage(goTES3MP.GetServerID(), discordReplyChannel, goTES3MP.GetDefaultDiscordServer(), commandList)
 end
 
 -- Add the help handler to the commandHandlers table
@@ -71,6 +77,11 @@ commandHandlers["help"] = {
     handler = helpHandler
 }
 
+--- Process the command and call the appropriate handler.
+---@param player string
+---@param command string
+---@param commandArgs string[]
+---@param discordReplyChannel string
 commands.processCommand = function(player, command, commandArgs, discordReplyChannel)
     if command == nil or command == "" then
         tes3mp.LogMessage(enumerations.log.WARN, "[Discord]: processCommand triggered with blank command.")
@@ -101,12 +112,14 @@ commands.processCommand = function(player, command, commandArgs, discordReplyCha
     end
 end
 
+--- Send a response to the Discord channel.
+---@param discordReplyChannel string
 commands.SendResponse = function(discordReplyChannel)
-    goTES3MPModules["utils"].sendDiscordMessage(goTES3MP.GetServerID(), discordReplyChannel, goTES3MP.GetDefaultDiscordServer(), "**Command Executed**")
+    goTES3MPModules.utils.sendDiscordMessage(goTES3MP.GetServerID(), discordReplyChannel, goTES3MP.GetDefaultDiscordServer(), "**Command Executed**")
 end
 
 -- Running this before a player connects, will cause a tes3mp crash
--- tes3mp.GetLastPlayerId() crashes if a player hasnt connected since server start.
+-- tes3mp.GetLastPlayerId() crashes if a player hasn't connected since server start.
 commands.getPlayerPID = function(str)
     local lastPid = tes3mp.GetLastPlayerId()
     if str ~= nil then

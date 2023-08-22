@@ -1,13 +1,29 @@
+-- The cjson library is required to parse JSON data.
 local cjson = require("cjson")
--- GoTES3MPSyncID = ""
-WaitingForSync = false
-local goTES3MP = {}
-goTES3MPModules = nil
-local TES3MPOnline = false 
 
+-- WaitingForSync is a flag indicating whether the server is waiting for synchronization.
+WaitingForSync = false
+
+-- The goTES3MP table is used to define functions related to the goTES3MP module.
+local goTES3MP = {}
+
+-- The goTES3MPModules variable is used to store the modules obtained from goTES3MP.GetModules().
+goTES3MPModules = nil
+
+-- TES3MPOnline is a flag indicating whether the TES3MP server is online.
+local TES3MPOnline = false
+
+-- The goTES3MPConfig module is required to access the goTES3MP configuration.
 local goTES3MPConfig = require("custom.goTES3MP.config")
+
+-- The goTES3MPConfig module is required to access the goTES3MP configuration.
+local goTES3MPUtils = require("custom.goTES3MP.utils")
+
 local config = goTES3MPConfig.GetConfig()
 
+-- Helper function to get a list of Lua module names from a folder.
+---@param folderPath string The path of the folder to search for Lua modules.
+---@return table A table containing the Lua module names found.
 local function getLuaModulesFromFolder(folderPath)
     local luaFiles = {}
 
@@ -37,7 +53,8 @@ local function getLuaModulesFromFolder(folderPath)
     return luaFiles
 end
 
-
+-- Function to load the modules.
+--- @return table The loaded goTES3MP modules.
 goTES3MP.LoadModules = function()
     if goTES3MPModules ~= nil then
         return goTES3MPModules
@@ -85,39 +102,45 @@ goTES3MP.LoadModules = function()
     return goTES3MPModules
 end
 
+-- Function to get the server ID.
+--- @return string The server ID.
 goTES3MP.GetServerID = function()
     if config.goTES3MP.serverid == "" then
-        config.goTES3MP.serverid = goTES3MPModules["utils"].randomString(16) 
+        config.goTES3MP.serverid = goTES3MPModules.utils.randomString(16) 
         DataManager.saveData("goTES3MP", goTES3MP.config)
     end
-    return config.goTES3MP.serverid
+    return tostring(config.goTES3MP.serverid)
 end
 
+-- Function to get the loaded modules.
+--- @return table The loaded goTES3MP modules.
 goTES3MP.GetModules = function()
-    if goTES3MPModules == nil then
-        goTES3MPModules = goTES3MP.LoadModules()
+    if goTES3MPModules ~= nil then
+        return goTES3MPModules
     end
+
+    goTES3MPModules = goTES3MP.LoadModules()
     return goTES3MPModules
 end
 
--- goTES3MP.GetSyncID = function()
---     if GoTES3MPSyncID == "" then
---         GoTES3MPSyncID = goTES3MPModules["utils"].randomString(16)   
---     end
---     return GoTES3MPSyncID
--- end
-
+-- Function to get the default Discord channel.
+--- @return string The default Discord channel.
 goTES3MP.GetDefaultDiscordChannel = function()
-    return config.goTES3MP.defaultDiscordChannel
+    return tostring(config.goTES3MP.defaultDiscordChannel)
 end
 
+-- Function to get the default Discord notifications channel.
+--- @return string The default Discord notifications channel.
 goTES3MP.GetDefaultDiscordNotificationsChannel = function()
-    return config.goTES3MP.defaultDiscordNotifications
+    return tostring(config.goTES3MP.defaultDiscordNotifications)
 end
 
+-- Function to get the default Discord server.
+---@return string The default Discord server.
 goTES3MP.GetDefaultDiscordServer = function()
-    return config.goTES3MP.defaultDiscordServer
+    return tostring(config.goTES3MP.defaultDiscordServer)
 end
+
 
 customEventHooks.registerValidator(
     "OnServerInit",
@@ -131,7 +154,7 @@ customEventHooks.registerValidator(
 
 customEventHooks.registerHandler("OnServerPostInit", function(eventStatus, pid)
     if TES3MPOnline == false then
-        goTES3MPModules["utils"].sendDiscordMessage(
+        goTES3MPUtils.sendDiscordMessage(
             config.goTES3MP.serverid,
             config.goTES3MP.defaultDiscordNotifications,
             config.goTES3MP.defaultDiscordServer,
@@ -142,7 +165,7 @@ customEventHooks.registerHandler("OnServerPostInit", function(eventStatus, pid)
 end)
 
 customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
-    goTES3MPModules["utils"].sendDiscordMessage(
+    goTES3MPUtils.sendDiscordMessage(
         config.goTES3MP.serverid,
         config.goTES3MP.defaultDiscordNotifications,
         config.goTES3MP.defaultDiscordServer,
@@ -151,7 +174,7 @@ customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
 end)
 
 customCommandHooks.registerCommand("forceSync", function(pid) 
-    goTES3MPModules["sync"].sendSync(true)
+    goTES3MPModules.sync.sendSync(true)
 end)
 
 return goTES3MP
