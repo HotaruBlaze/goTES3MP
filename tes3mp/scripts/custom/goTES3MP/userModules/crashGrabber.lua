@@ -13,7 +13,7 @@ customEventHooks.registerValidator(
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:crashGrabber]: Loaded")
 
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:crashGrabber]: Checking if restart was due to a script error...")
-        crashReason = crashGrabber.getPreviousError()
+        crashType, crashReason = crashGrabber.getPreviousError()
         
         if crashReason then
             tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:crashGrabber]: Previous crash was due to\n - "..crashReason)
@@ -21,7 +21,7 @@ customEventHooks.registerValidator(
                 serverID,
                 discordChannel,
                 discordServer,
-                crashGrabber.generateCrashMessage(crashReason)
+                crashGrabber.generateCrashMessage(crashType, crashReason)
             )
         else
             tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:crashGrabber]: No previous error found.")
@@ -30,57 +30,65 @@ customEventHooks.registerValidator(
 )
 
 --- Generate a crash message
----@param crashReason string - The reason for the crash
----@return string - The formatted crash message
-function crashGrabber.generateCrashMessage(crashReason)
-    return string.format("### Server Crash Detected\n```\n%s\n```", crashReason)
+---@param crashReason string The reason for the crash
+---@return string The formatted crash message
+function crashGrabber.generateCrashMessage(crashType, crashReason)
+    return string.format("### %s\n```\n%s\n```", crashType, crashReason)
 end
 
 --- Get the second newest file in the log folder
----@param LogFolder string - The path to the log folder
----@return string - The name of the second newest log file
+---@param LogFolder string The path to the log folder
+---@return string The name of the second newest log file
 crashGrabber.getSecondNewestFile = function(LogFolder)
     local newestFile = nil
     local secondNewestFile = nil
     local newestTimestamp = 0
     local secondNewestTimestamp = 0
 
+    local command
     if package.config:sub(1,1) == '\\' then
         -- Windows
-        command = 'dir /B "' .. LogFolder .. '"'
+        command = 'dir /B /O-D "' .. LogFolder .. '"'
     else
-        -- Linux
-        command = 'ls -lt "' .. LogFolder .. '"'
+        -- Unix-like systems
+        command = 'ls -1t "' .. LogFolder .. '"'
     end
 
     local fileHandle = io.popen(command)
+    local commandOutput = fileHandle:read("*a") -- Read the entire output
 
+    if fileHandle:close() then
+        for file in commandOutput:gmatch("[^\r\n]+") do
+            local filename = file:match("tes3mp%-server%-%d%d%d%d%-%d%d%-%d%d%-%d%d_%d%d_%d%d%.log")
+            if filename then
+                local timestamp = os.time { year = filename:sub(15, 18), month = filename:sub(20, 21), day = filename:sub(23, 24), hour = filename:sub(26, 27), min = filename:sub(29, 30), sec = filename:sub(32, 33) }
 
-    for file in io.popen(command):lines() do
-        local filename = file:match("tes3mp%-server%-%d%d%d%d%-%d%d%-%d%d%-%d%d_%d%d_%d%d%.log")
-        if filename then
-            local timestamp = os.time { year = filename:sub(15, 18), month = filename:sub(20, 21), day = filename:sub(23, 24), hour = filename:sub(26, 27), min = filename:sub(29, 30), sec = filename:sub(32, 33) }
-
-            if timestamp > newestTimestamp then
-                secondNewestFile = newestFile
-                secondNewestTimestamp = newestTimestamp
-                newestFile = filename
-                newestTimestamp = timestamp
-            elseif timestamp > secondNewestTimestamp then
-                secondNewestFile = filename
-                secondNewestTimestamp = timestamp
+                if timestamp > newestTimestamp then
+                    secondNewestFile = newestFile
+                    secondNewestTimestamp = newestTimestamp
+                    newestFile = filename
+                    newestTimestamp = timestamp
+                elseif timestamp > secondNewestTimestamp then
+                    secondNewestFile = filename
+                    secondNewestTimestamp = timestamp
+                end
             end
         end
+    else
+        print("Failed to execute command: " .. command)
     end
 
     return secondNewestFile
 end
 
 --- Read errors from a log file
----@param file userdata - The file handle of the log file
----@return table - An array of captured errors
+---@param file userdata The file handle of the log file
+---@return table An array of captured errors
 crashGrabber.readErrorsFromLog = function(file)
     local capturedErrors = {}
+    local capturedLines = {}
+    local numLinesToCapture = 5
+    local lastLine = nil
     local pattern = "%[(%d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d)%] %[(ERR)%]: .-"
 
     for line in file:lines() do
@@ -88,35 +96,46 @@ crashGrabber.readErrorsFromLog = function(file)
         if timestamp and severity == "ERR" then
             table.insert(capturedErrors, {severity = severity, line = line})
         end
+
+        table.insert(capturedLines, line)
+        if #capturedLines > numLinesToCapture then
+            table.remove(capturedLines, 1)
+        end
     end
 
-    return capturedErrors
+    return capturedErrors, lastLine
 end
 
 --- Get the previous error from the log files
----@return string|nil - The path of the file containing the previous error, or nil if no error is found
+--- @return string|nil The error type, and the corresponding information or nil if no error is found
 crashGrabber.getPreviousError = function()
     local errorLog = crashGrabber.getSecondNewestFile(LogFolder)
 
     local file = assert(io.open(LogFolder.."/"..errorLog, "r"))
-    local capturedErrors = crashGrabber.readErrorsFromLog(file)
+    local capturedErrors, lastLines  = crashGrabber.readErrorsFromLog(file)
     file:close()
-    
+
     local filePathsFound = {}
-    
+    local hasScriptError = false
+
     for _, errorData in ipairs(capturedErrors) do
         local filePath = errorData.line:match("%.%/%a+/.+")
         if filePath then
             table.insert(filePathsFound, {severity = errorData.severity, line = errorData.line, filePath = filePath})
         end
+
+        local matchedScriptError = errorData.line:match("%[ERR%]: %[Script%]: Error state: false")
+        if matchedScriptError then
+            hasScriptError = true
+        end
     end
-    
+
     if #filePathsFound > 0 then
         local errorFilePath = filePathsFound[1].filePath
-        return errorFilePath
+        return "Script Error", errorFilePath
     else
-        return nil
+        if not hasScriptError then
+            return "Server did not crash natually, Last log is below", table.concat(lastLines, "\n")
+        end
     end
 end
-
-return crashGrabber
