@@ -65,33 +65,39 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func getUsersRole(m *discordgo.Message) (string, string) {
 	discordRoles := getDiscordRoles(m.Author.ID, m.GuildID)
+	var userroles []string
 	var allowedUserRole, allowedStaffRole bool
-	index := -1
-
+	index, pos := -1, -1
 	for r, i := range discordRoles {
-		discordUserroles := viper.GetViper().GetStringSlice("discord.userroles")
-		if len(discordUserroles) > 0 {
+		userroles = append(userroles, i.Name)
+		if len(viper.GetViper().GetStringSlice("discord.userroles")) > 0 {
+			discordUserroles := viper.GetViper().GetStringSlice("discord.userroles")
 			_, allowedUserRole = FindinArray(discordUserroles, i.Name)
 		}
 
-		discordStaffroles := viper.GetViper().GetStringSlice("discord.staffroles")
-		if len(discordStaffroles) > 0 {
+		if len(viper.GetViper().GetStringSlice("discord.staffroles")) > 0 {
+			discordStaffroles := viper.GetViper().GetStringSlice("discord.staffroles")
 			_, allowedStaffRole = FindinArray(discordStaffroles, i.Name)
 		}
-
 		if i.Name == persistantData.Users[m.Author.ID] {
 			index = r
+			pos = i.Position
 			break
-		} else if i.Position > discordRoles[index].Position && allowedStaffRole {
-			index = r
-		} else if i.Position > discordRoles[index].Position && allowedUserRole {
-			index = r
+		} else {
+			if i.Position > pos && allowedStaffRole {
+				index = r
+				pos = i.Position
+			} else {
+				if i.Position > pos && allowedUserRole {
+					index = r
+					pos = i.Position
+				}
+			}
 		}
 	}
-
 	if index == -1 {
 		return "", ""
+	} else {
+		return discordRoles[index].Name, discordRoles[index].Color
 	}
-
-	return discordRoles[index].Name, discordRoles[index].Color
 }
