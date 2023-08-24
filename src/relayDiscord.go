@@ -19,7 +19,7 @@ func sendRawDiscordMessage(rawDiscordStruct rawDiscordStruct) bool {
 
 // messageCreate is a function that handles incoming messages in a Discord server
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID || len(m.Content) == 0 || m.ChannelID != viper.GetString("discord.serverchat") {
+	if m.Author.ID == s.State.User.ID || len(m.Content) == 0 {
 		return
 	}
 
