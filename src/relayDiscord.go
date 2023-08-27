@@ -28,6 +28,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if m.ChannelID != viper.GetString("discord.serverchat") {
+		return
+	}
+
 	discordresponse := baseresponse{
 		ServerID: viper.GetViper().GetString("tes3mp.serverid"),
 		Method:   "DiscordChat",
