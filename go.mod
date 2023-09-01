@@ -3,7 +3,7 @@ module github.com/hotarublaze/gotes3mp
 go 1.20
 
 require (
-	github.com/bwmarrin/discordgo v0.27.1
+	github.com/bwmarrin/discordgo v0.27.2-0.20230816134654-ff9176adccb6
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/google/go-github v17.0.0+incompatible

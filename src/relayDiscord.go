@@ -48,9 +48,13 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	guildMember, err := s.GuildMember(m.GuildID, m.Message.Author.ID)
 	checkError("[RelayDiscord]: guildMember ", err)
+
 	user := guildMember.Nick
 	if user == "" {
-		user = m.Author.Username
+		user = guildMember.User.GlobalName
+	}
+	if user == "" {
+		user = guildMember.User.Username
 	}
 
 	roleName, roleColor := getUsersRole(m.Message)
