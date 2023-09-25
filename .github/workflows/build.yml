@@ -24,7 +24,7 @@ jobs:
       - name: Run Tests
         run: go test ./src/...
       - name: Build-Linux
-        run: go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux src/*.go
+        run: CGO_ENABLED=0 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux src/*.go
       - name: Generate default config
         run: cd build/ &&chmod +x goTES3MP-Linux && ./goTES3MP-Linux
 
@@ -51,7 +51,7 @@ jobs:
       - name: Run Tests
         run: go test ./src
       - name: Build-Windows
-        run: GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Windows.exe src/*.go
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Windows.exe src/*.go
 
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.5
