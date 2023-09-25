@@ -107,7 +107,7 @@ end
 goTES3MP.GetServerID = function()
     if config.goTES3MP.serverid == "" then
         config.goTES3MP.serverid = goTES3MPModules.utils.randomString(16) 
-        DataManager.saveData("goTES3MP", goTES3MP.config)
+        goTES3MPConfig.SaveConfig(config)
     end
     return tostring(config.goTES3MP.serverid)
 end
