@@ -97,7 +97,6 @@ customEventHooks.registerHandler(
             method = "VPNCheck",
             source = "TES3MP",
             serverid = goTES3MP.GetServerID(),
-            syncid = GoTES3MPSyncID,
             data = {
                 channel = discordChannel,
                 server = discordServer,

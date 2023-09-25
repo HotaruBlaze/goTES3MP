@@ -1,7 +1,5 @@
 # GoTES3MP Methods
 
-### Note: syncid is not used however it hasnt been fully removed from the source code and still has to be included in some places, however can be a blank string.
-
 # "Sync" Method: [Link](../tes3mp/scripts/custom/goTES3MP\sync.lua)
 ```lua
 local messageJson = {
@@ -31,7 +29,6 @@ local messageJson =
     method = "rawDiscord",
     source = "TES3MP",
     serverid = goTES3MP.GetServerID(),
-    syncid = GoTES3MPSyncID,
     data = {
         channel = discordChannel,
         server = discordServer,
@@ -52,7 +49,6 @@ local messageJson = {
     method = "VPNCheck",
     source = "TES3MP",
     serverid = goTES3MP.GetServerID(),
-    syncid = GoTES3MPSyncID,
     data = {
         channel = discordChannel,
         server = discordServer,

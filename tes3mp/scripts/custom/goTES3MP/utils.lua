@@ -56,7 +56,6 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
         method = "rawDiscord",
         source = "TES3MP",
         serverid = ServerID,
-        syncid = GoTES3MPSyncID,
         data = {
             channel = channel,
 			server = server,
@@ -64,7 +63,6 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
         }
     }
     local response = goTES3MPUtils.isJsonValidEncode(messageJson)
-
     if response ~= nil then
         IrcBridge.SendSystemMessage(response)
     else
