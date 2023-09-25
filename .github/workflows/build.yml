@@ -13,6 +13,9 @@ jobs:
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go 1.x
@@ -40,6 +43,9 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
     steps:
       - uses: actions/checkout@v3
       - name: Set up Go 1.x
@@ -63,6 +69,9 @@ jobs:
   add-scripts:
     name: Add Scripts
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
     steps:
       - uses: actions/checkout@v3
 
