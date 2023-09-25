@@ -56,7 +56,7 @@ local commandHandlers = {
             local reconstructedString = table.concat(commandArgs, " ")
             local playerName, questID = reconstructedString:match('^"([^"]-)"%s*(.*)$')
             local playerPID = commands.getPlayerPID(playerName)
-            goTES3MPModules.journal.GetJournalEntries(playerName, questID, discordReplyChannel)
+            goTES3MPModules.getJournal.GetJournalEntries(playerName, questID, discordReplyChannel)
         end
     },
 }
