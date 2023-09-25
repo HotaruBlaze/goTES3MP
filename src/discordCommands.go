@@ -27,10 +27,7 @@ func discordCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check if there are additional arguments in the command
 	if len(stringArr) > 1 {
-		commandStruct.Data["TargetPlayer"] = stringArr[1]
-		if len(stringArr) > 2 {
-			commandStruct.Data["CommandArgs"] = strings.Join(stringArr[2:], " ")
-		}
+		commandStruct.Data["CommandArgs"] = strings.Join(stringArr[1:], "^")
 	}
 
 	// Set the reply channel in the command struct

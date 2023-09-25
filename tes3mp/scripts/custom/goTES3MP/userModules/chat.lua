@@ -72,20 +72,23 @@ customEventHooks.registerValidator(
     "OnPlayerDeath",
     function(eventStatus, pid)
         local playerName = Players[pid].name
-        local deathReason = "committed suicide"
+        local deathReason = ""
 
         if tes3mp.DoesPlayerHavePlayerKiller(pid) then
             local killerPid = tes3mp.GetPlayerKillerPid(pid)
-            if pid ~= killerPid then
+            if pid ~= killerPid and Players[killerPid] ~= nil then
                 deathReason = "was killed by player " .. Players[killerPid].name
+            elseif pid == killerPid then
+                deathReason = "committed suicide"
             end
         else
             local killerName = tes3mp.GetPlayerKillerName(pid)
-            if killerName ~= "" then
+            if killerName ~= nil then
                 deathReason = "was killed by " .. killerName
+            else
+                deathReason = "was killed by an unknown entity"
             end
         end
-
         deathReason = playerName .. " " .. deathReason
 
         goTES3MPModules.utils.sendDiscordMessage(

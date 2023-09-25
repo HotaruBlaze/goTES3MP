@@ -67,7 +67,15 @@ IrcBridge.RecvMessage = function()
                             goTES3MPSync.gotSync(response.ServerID, response.SyncID)
                         end,
                         ["Command"] = function()
-                            goTES3MPModules.commands.processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
+                            local commandArguments = {}
+                            if response.data["CommandArgs"] and type(response.data["CommandArgs"]) == "string" then
+                                if response.data["CommandArgs"]:match("^%s*$") then
+                                    table.insert(commandArguments, response.data["CommandArgs"])
+                                else
+                                    commandArguments = string.split(response.data["CommandArgs"], "^")
+                                end
+                            end
+                            goTES3MPModules.commands.processCommand(response.data["Command"], commandArguments, response.data["replyChannel"])
                         end,
                         ["DiscordChat"] = function()
                             IrcBridge.chatMessage(response)
