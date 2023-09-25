@@ -77,6 +77,7 @@ customEventHooks.registerValidator(
         -- Get the default configs from goTES3MP
         discordServer = goTES3MP.GetDefaultDiscordServer()
         discordChannel = goTES3MP.GetDefaultDiscordChannel()
+        vpnWhitelist = goTES3MPVPNChecker.LoadConfig()
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:VPNChecker] Loaded")
     end
 )
