@@ -134,6 +134,9 @@ crashGrabber.getPreviousError = function()
         local errorFilePath = filePathsFound[1].filePath
         return "Script Error", errorFilePath
     else
+        if lastLines == nil then
+            return "crashGrabber was unable to find or access the previous error reason!"
+        end
         if not hasScriptError then
             return "Server did not crash natually, Last log is below", table.concat(lastLines, "\n")
         end
