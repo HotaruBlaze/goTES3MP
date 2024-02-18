@@ -53,9 +53,16 @@ func processRelayMessage(s baseresponse) bool {
 		m.Channel = res.Data["channel"]
 		m.Server = res.Data["server"]
 		m.Message = res.Data["message"]
+
+		// Check if channel,server and message are not nil, but print the reason why it failed.
+		if m.Channel == "" || m.Server == "" || m.Message == "" {
+			log.Errorln("[ProcessRelayMessage][rawDiscord]: One or more required fields are nil")
+			return false
+		} else {
 		status := sendRawDiscordMessage(m)
 		logRelayedMessages("TES3MP", m.Message)
 		return status
+		}
 	case "VPNCheck":
 		processVPNCheck(res)
 	default:
