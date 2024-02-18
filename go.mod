@@ -7,6 +7,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-version v1.6.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.16.0

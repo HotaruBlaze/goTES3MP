@@ -10,6 +10,7 @@ import (
 )
 
 type baseresponse struct {
+	JobID    string            `json:"jobid"`
 	ServerID string            `json:"serverid"`
 	Method   string            `json:"method"`
 	Source   string            `json:"source"`
@@ -59,9 +60,9 @@ func processRelayMessage(s baseresponse) bool {
 			log.Errorln("[ProcessRelayMessage][rawDiscord]: One or more required fields are nil")
 			return false
 		} else {
-		status := sendRawDiscordMessage(m)
-		logRelayedMessages("TES3MP", m.Message)
-		return status
+			status := sendRawDiscordMessage(m)
+			logRelayedMessages("TES3MP", m.Message)
+			return status
 		}
 	case "VPNCheck":
 		processVPNCheck(res)
@@ -114,6 +115,11 @@ func processRelayMessageSanityCheck(relayMsg *baseresponse) error {
 	// Check if the method is blank
 	if relayMsg.Method == "" {
 		return fmt.Errorf("method cannot be blank")
+	}
+
+	// Check if jobid is blank
+	if relayMsg.JobID == "" {
+		return fmt.Errorf("jobid cannot be blank")
 	}
 
 	// Check if data is provided

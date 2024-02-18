@@ -11,7 +11,7 @@ local syncTimerID = nil
 local syncTimer = 30
 
 -- Sends a synchronization message to the server.
----@param forceResync boolean - indicator whether to force a resynchronization.
+---@param forceResync boolean indicator whether to force a resynchronization.
 goTES3MPSync.sendSync = function(forceResync)
     local serverID = goTES3MP.GetServerID()
     if serverID ~= "" then
@@ -20,6 +20,7 @@ goTES3MPSync.sendSync = function(forceResync)
 
         -- Construct the synchronization message as a JSON object.
         local messageJson = {
+            jobid = goTES3MPModules.utils.generate_uuid(),
             ServerID = serverID,
             method = "Sync",
             source = "TES3MP",

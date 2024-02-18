@@ -8,7 +8,7 @@ local discordServer = ""
 local vpnWhitelist = {}
 
 --- Load the VPN whitelist from a JSON file
----@return table - Load the VPN whitelist
+---@return table Load the VPN whitelist
 goTES3MPVPNChecker.LoadConfig = function()
     vpnWhitelist = jsonInterface.load("custom/goTES3MP_VPNWhitelist.json")
 
@@ -28,8 +28,8 @@ goTES3MPVPNChecker.SaveConfig = function(vpnWhitelist)
 end
 
 --- Handle the whitelist-related commands
----@param pid number - The player ID
----@param cmd table - The command parameters
+---@param pid number The player ID
+---@param cmd table The command parameters
 goTES3MPVPNChecker.whitelistController = function(pid, cmd)
     if cmd[2] == "add" then
         local username = string.lower(tableHelper.concatenateFromIndex(cmd, 3))
@@ -95,9 +95,10 @@ customEventHooks.registerHandler(
 
         local IP = tes3mp.GetIP(pid)
         local messageJson = {
+            jobid = goTES3MPModules.utils.generate_uuid(),
+            serverid = goTES3MP.GetServerID(),
             method = "VPNCheck",
             source = "TES3MP",
-            serverid = goTES3MP.GetServerID(),
             data = {
                 channel = discordChannel,
                 server = discordServer,

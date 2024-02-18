@@ -53,6 +53,7 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
         return
     end
     local messageJson = {
+        jobid = goTES3MPUtils.generate_uuid(),
         method = "rawDiscord",
         source = "TES3MP",
         serverid = ServerID,
@@ -81,6 +82,16 @@ goTES3MPUtils.alphanumsort = function(o)
 		return tostring(a):gsub("%d+", padnum) < tostring(b):gsub("%d+", padnum)
 	end)
 	return o
+end
+
+goTES3MPUtils.generate_uuid = function()
+    -- Set a random seed based on os.clock()
+    math.randomseed(os.clock()^5)
+    
+    return ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'):gsub('[xy]', function(c)
+        local v = c == 'x' and math.random(0, 15) or math.random(8, 11)
+        return ('%x'):format(v)
+    end)
 end
 
 return goTES3MPUtils

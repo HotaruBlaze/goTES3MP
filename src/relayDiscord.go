@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -33,6 +34,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	discordresponse := baseresponse{
+		JobID:    uuid.New().String(),
 		ServerID: viper.GetViper().GetString("tes3mp.serverid"),
 		Method:   "DiscordChat",
 		Source:   "Discord",
