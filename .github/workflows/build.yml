@@ -21,7 +21,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ^1.20
+          go-version: ^1.22
           stable: true
         id: linux-build
       - name: Run Tests
@@ -50,7 +50,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ^1.20
+          go-version: ^1.22
           stable: true
         id: linux-build
       - name: Run Tests
@@ -79,7 +79,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.20
+          go-version: ^1.22
           stable: true
         id: windows-build
       - name: Run Tests
