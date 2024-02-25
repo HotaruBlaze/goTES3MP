@@ -58,7 +58,8 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 		// Discord module is ready!
 		log.Println(tes3mpLogMessage, "Discord Module is now running")
 		// Get the first guildID
-		DiscordGuildID = event.Guilds[0].ID
+		// DiscordGuildID = event.Guilds[0].ID
+		DiscordGuildID = viper.GetString("discord.guildID")
 		// Load Commands
 		commandResponses, err = LoadDiscordCommandData()
 		if err != nil {

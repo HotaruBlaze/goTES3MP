@@ -43,6 +43,7 @@ func loadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("discord.enable", false)
 	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("discord.token", "")
+	viper.SetDefault("discord.guildID", "")
 	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
