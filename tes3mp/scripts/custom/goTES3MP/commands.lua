@@ -192,8 +192,12 @@ end
 customCommandHooks.registerCommand("pushSlashCommand", function(pid, cmd) 
     commands.pushSlashCommands(pid, cmd)
 end)
+customCommandHooks.setRankRequirement("pushSlashCommand", 3)
+
 customCommandHooks.registerCommand("pushAllSlashCommands", function(pid, cmd) 
     commands.pushAllSlashCommands(pid, cmd)
 end)
+customCommandHooks.setRankRequirement("pushAllSlashCommands", 3)
+
 
 return commands
