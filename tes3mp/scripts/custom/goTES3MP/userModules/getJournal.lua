@@ -10,7 +10,8 @@ local getJournal = {}
 ---@param playerName string The name of the player
 ---@param questID string The ID of the quest
 ---@param discordReplyChannel string The Discord channel to send the journal entries message to
-getJournal.GetJournalEntries = function(playerName, questID, discordReplyChannel)
+---@return string The response message
+getJournal.GetJournalEntries = function(playerName, questID)
     local questIndexs = {}
 
     -- Get the player by name
@@ -26,13 +27,7 @@ getJournal.GetJournalEntries = function(playerName, questID, discordReplyChannel
 
         -- Check if no matching quest entries were found
         if #questIndexs == 0 then
-            goTES3MPUtils.sendDiscordMessage(
-                serverID,
-                discordReplyChannel,
-                discordServer,
-                "**Quest ID is invalid or player does not have this Quest.**"
-            )
-            return
+            return "Quest ID is invalid or player does not have this Quest."
         end
 
         -- Sort the quest indices in alphanumeric order
@@ -53,20 +48,10 @@ getJournal.GetJournalEntries = function(playerName, questID, discordReplyChannel
         questList[#questList + 1] = "```"
 
         -- Send the quest list as a message to the Discord channel
-        goTES3MPUtils.sendDiscordMessage(
-            serverID,
-            discordReplyChannel,
-            discordServer,
-            table.concat(questList)
-        )
+        return table.concat(questList)
     else
         -- Send a message to the Discord channel indicating that the player does not exist
-        goTES3MPUtils.sendDiscordMessage(
-            serverID,
-            discordReplyChannel,
-            discordServer,
-            "**Player does not exist.**"
-        )
+        return "Player does not exist."
     end
 end
 

@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -18,6 +22,7 @@ type discordRole struct {
 
 // DiscordSession : Global Discord Session
 var DiscordSession *discordgo.Session
+var DiscordGuildID string
 
 // InitDiscord initializes the discordgo session
 func InitDiscord() {
@@ -36,6 +41,7 @@ func InitDiscord() {
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(ready)
 	discord.AddHandler(UpdateDiscordStatus)
+	discord.AddHandler(handleDiscordCommands)
 
 	// Open the connection to Discord
 	if err := discord.Open(); err != nil {
@@ -49,8 +55,147 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	if err != nil {
 		log.Println(err)
 	} else {
+		// Discord module is ready!
 		log.Println(tes3mpLogMessage, "Discord Module is now running")
+		// Get the first guildID
+		DiscordGuildID = event.Guilds[0].ID
+		// Load Commands
+		commandResponses, err = LoadDiscordCommandData()
+		if err != nil {
+			log.Errorln("Error loading Discord command data:", err)
+		}
 	}
+}
+
+func handleDiscordCommands(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// Check if the interaction is an application command
+	if i.Type == discordgo.InteractionApplicationCommand {
+		// Get the name of the command
+		commandName := strings.ToLower(i.ApplicationCommandData().Name)
+
+		// Convert discord options to json we can handle easier
+		commandArgs, err := discordOptionsToJSON(i.ApplicationCommandData().Options)
+		if err != nil {
+			log.Errorln("Error converting Discord options to JSON:", err)
+		}
+
+		commandArgs = string(commandArgs)
+
+		// Find and execute the corresponding functionality based on the command name
+		if _, ok := commandResponses.Commands[commandName]; ok {
+			// Build a DiscordCommand packet for TES3MP
+			discordCommand := baseresponse{
+				JobID:    uuid.New().String(),
+				ServerID: viper.GetString("tes3mp.serverid"),
+				Method:   "Command",
+				Source:   "DiscordCommand",
+				Target:   "TES3MP",
+				Data: map[string]string{
+					"command":                 commandName,
+					"args":                    commandArgs,
+					"discordInteractiveToken": string(i.Interaction.Token),
+				},
+			}
+			jsonresponse, err := json.Marshal(discordCommand)
+			checkError("DiscordChat", err)
+			sendresponse := bytes.NewBuffer(jsonresponse).String()
+			IRCSendMessage(viper.GetString("irc.systemchannel"), sendresponse)
+
+			// Temp response for now
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Processing...",
+				},
+			})
+		} else {
+			// Respond with unknown command message
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Unknown command. Type `/help` to see available commands.",
+				},
+			})
+		}
+	}
+}
+
+// discordOptionsToJSON converts Discord options to JSON format.
+func discordOptionsToJSON(options []*discordgo.ApplicationCommandInteractionDataOption) (string, error) {
+	// Create a map to store the data
+	data := make(map[string]interface{})
+
+	// Iterate through each option and convert it to the appropriate type
+	for _, option := range options {
+		name := option.Name
+		var value interface{}
+		switch option.Type {
+		case discordgo.ApplicationCommandOptionString:
+			value = option.StringValue()
+		case discordgo.ApplicationCommandOptionInteger:
+			value = option.IntValue()
+		case discordgo.ApplicationCommandOptionBoolean:
+			value = option.BoolValue()
+		default:
+			value = option.StringValue()
+		}
+
+		// Add the converted value to the data map
+		data[name] = value
+	}
+
+	// Marshal the data map into JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonData), nil
+}
+
+// createSlashCommand creates a new slash command for the given command name in the Discord guild.
+// It maps each command argument to a discordgo.ApplicationCommandOption and sets the options for the command.
+func createSlashCommand(command string) error {
+	// Retrieve the command details from the commandResponses map
+	tes3mpCommand := commandResponses.Commands[command]
+
+	// Create a slice to hold the options
+	var options []*discordgo.ApplicationCommandOption
+
+	// Map each command argument to a discordgo.ApplicationCommandOption
+	for _, arg := range tes3mpCommand.CommandArgs {
+		// Determine the type of the argument based on your requirements
+		optionType := discordgo.ApplicationCommandOptionString // For example, assuming all args are strings
+
+		// Create the option
+		option := &discordgo.ApplicationCommandOption{
+			Type:        optionType,
+			Name:        arg.Name,
+			Description: arg.Description,
+			Required:    arg.Required,
+		}
+
+		// Add the option to the slice
+		options = append(options, option)
+	}
+
+	// Define the data for the slash command
+	commandData := &discordgo.ApplicationCommand{
+		Name:        tes3mpCommand.Command,
+		Description: tes3mpCommand.Description,
+		Type:        discordgo.ChatApplicationCommand,
+		Options:     options, // Set the options for the command
+	}
+
+	// Create the slash command in a specific guild
+	_, err := DiscordSession.ApplicationCommandCreate(DiscordSession.State.User.ID, DiscordGuildID, commandData)
+	if err != nil {
+		return err
+	}
+
+	// Print confirmation message
+	log.Println("Created discord slash command:", command)
+	return nil
 }
 
 // allowColorHexUsage checks if the usage of color hex codes is allowed.
@@ -180,4 +325,14 @@ func isStaffMember(UserID string, GuildID string) bool {
 
 	// Return false if the user is not a staff member
 	return false
+}
+
+func SendDiscordInteractiveMessage(interactionToken, newContent string) {
+	// Construct the interaction response data for editing
+	responseEdit := &discordgo.WebhookEdit{
+		Content: &newContent, // New content for the interaction response
+	}
+
+	// Update the interaction response
+	DiscordSession.WebhookMessageEdit(DiscordSession.State.User.ID, interactionToken, "@original", responseEdit)
 }

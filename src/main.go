@@ -102,11 +102,14 @@ func main() {
 			case "reloaddiscord":
 				log.Debugln("Attempting to reload Discord")
 				InitDiscord()
+			case "purgecommands":
+				log.Println("Purging Discord commands...")
+				purgeDiscordCommands()
 			case "exit", "quit", "stop":
 				log.Debugln("Shutting down...")
 				commandShutdown()
 			default:
-				log.Warnf("Command \"%s\" was not recognized.", command)
+				log.Warnf("Command " + command + " was not recognized.")
 			}
 		}
 	}

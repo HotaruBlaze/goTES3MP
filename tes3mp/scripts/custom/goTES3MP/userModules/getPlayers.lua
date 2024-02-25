@@ -1,11 +1,11 @@
 local getPlayers = {}
-local cjson = require("cjson")
 local goTES3MPModules = goTES3MP.GetModules()
 
 
 --- Retrieve the list of players and send it as a message to a Discord channel
----@param discordReplyChannel string - The Discord channel to send the player list message to
-getPlayers.getPlayers = function(discordReplyChannel)
+---@param discordReplyChannel string The Discord channel to send the player list message to
+---@return string The player list message
+getPlayers.getPlayers = function()
     local playerList = ""
 
     -- Check if there are any players online
@@ -23,21 +23,12 @@ getPlayers.getPlayers = function(discordReplyChannel)
     -- Check if playerList is empty or has no players
     if playerList == "" then
         local noPlayersMessage = "**No players are currently online.**"
-        goTES3MPModules.utils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            discordReplyChannel,
-            goTES3MP.GetDefaultDiscordServer(),
-            noPlayersMessage
-        )
+        return noPlayersMessage
+
     else
         -- Format the playerList with triple backticks and send it as a message to Discord
         playerList = "```" .."\n".. playerList .."\n".. "```"
-        goTES3MPModules.utils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            discordReplyChannel,
-            goTES3MP.GetDefaultDiscordServer(),
-            playerList
-        )
+        return playerList
     end
 end
 

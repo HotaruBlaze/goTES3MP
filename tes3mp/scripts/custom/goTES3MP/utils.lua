@@ -44,7 +44,7 @@ end
 --- Sends a message to Discord.
 ---@param ServerID string The ID of the server.
 ---@param channel string The channel to send the message to.
----@param server string server The target siscord server id.
+---@param server string server The target discord server id.
 ---@param message string The message to send to Discord.
 goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
     -- Max character limit Discord allows as a single message

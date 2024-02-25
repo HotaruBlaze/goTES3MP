@@ -67,15 +67,12 @@ IrcBridge.RecvMessage = function()
                             goTES3MPSync.gotSync(response.ServerID, response.SyncID)
                         end,
                         ["Command"] = function()
-                            local commandArguments = {}
-                            if response.data["CommandArgs"] and type(response.data["CommandArgs"]) == "string" then
-                                if response.data["CommandArgs"]:match("^%s*$") then
-                                    table.insert(commandArguments, response.data["CommandArgs"])
-                                else
-                                    commandArguments = string.split(response.data["CommandArgs"], "^")
-                                end
-                            end
-                            goTES3MPModules.commands.processCommand(response.data["Command"], commandArguments, response.data["replyChannel"])
+                            local command = response.data.command
+                            local commandArgs = goTES3MPModules.utils.isJsonValidDecode(response.data.args)
+                            tes3mp.LogMessage(enumerations.log.INFO, "[GoTES3MP:Command] Executing command \"" .. command .. "\" with args {" .. tableHelper.getSimplePrintableTable(commandArgs).."}")
+                            commandArgs["discordInteractiveToken"] = response.data["discordInteractiveToken"]
+
+                            goTES3MPModules.commands.processCommand(command, commandArgs)
                         end,
                         ["DiscordChat"] = function()
                             IrcBridge.chatMessage(response)
