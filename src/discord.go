@@ -23,6 +23,8 @@ type discordRole struct {
 // DiscordSession : Global Discord Session
 var DiscordSession *discordgo.Session
 var DiscordGuildID string
+var defaultMemberPermissions int64 = discordgo.PermissionManageServer
+var DMPermission bool = false
 
 // InitDiscord initializes the discordgo session
 func InitDiscord() {
@@ -182,10 +184,12 @@ func createSlashCommand(command string) error {
 
 	// Define the data for the slash command
 	commandData := &discordgo.ApplicationCommand{
-		Name:        tes3mpCommand.Command,
-		Description: tes3mpCommand.Description,
-		Type:        discordgo.ChatApplicationCommand,
-		Options:     options, // Set the options for the command
+		Name:                     tes3mpCommand.Command,
+		Description:              tes3mpCommand.Description,
+		Type:                     discordgo.ChatApplicationCommand,
+		DefaultMemberPermissions: &defaultMemberPermissions,
+		DMPermission:             &DMPermission,
+		Options:                  options, // Set the options for the command
 	}
 
 	// Create the slash command in a specific guild
