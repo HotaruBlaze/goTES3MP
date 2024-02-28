@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"math/big"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -52,6 +53,15 @@ func InitDiscord() {
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
+	// Check if bot is in any discord servers first
+	if len(event.Guilds) == 0 {
+		log.Errorln("[Discord] Bot is not in any Discord servers")
+		os.Exit(1)
+	}
+	if len(event.Guilds) > 1 {
+		log.Warnln("[Discord] Bot is in more than 1 Discord server, this can have unintended results.")
+	}
+
 	// Set the playing status.
 	err := s.UpdateGameStatus(0, "")
 	if err != nil {
