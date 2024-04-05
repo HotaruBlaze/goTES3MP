@@ -24,22 +24,31 @@ jobs:
           go-version: ^1.22
           stable: true
         id: linux-build
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
       - name: Generate go files
-        run: go generate
+        run: |
+          cd src
+          go install google.golang.org/protobuf/cmd/protoc-gen-go
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          go generate
+          cd ..
       - name: Run Tests
         run: go test ./src/...
       - name: Build-Linux
-        run: CGO_ENABLED=0 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux src/*.go
+        run: |
+          cd src
+          CGO_ENABLED=0 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o ../build/goTES3MP_Linux_amd64 .
       - name: Generate default config
-        run: cd build/ && chmod +x goTES3MP-Linux && ./goTES3MP-Linux
-
+        run: cd build/ && chmod +x goTES3MP_Linux_amd64 && ./goTES3MP_Linux_amd64
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            build/goTES3MP-Linux
+            build/goTES3MP_Linux_amd64
             build/config.yaml
   build-linux-aarch64:
     name: Build Linux - aarch64
@@ -55,20 +64,31 @@ jobs:
           go-version: ^1.22
           stable: true
         id: linux-build
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+      - name: Generate go files
+        run: |
+          cd src
+          go install google.golang.org/protobuf/cmd/protoc-gen-go
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          go generate
+          cd ..
       - name: Run Tests
         run: go test ./src/...
       - name: Build-Linux
-        run: CGO_ENABLED=0 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Linux-aarm64 src/*.go
+        run: |
+          cd src
+          CGO_ENABLED=0 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=${GITHUB_SHA}'" -o ../build/goTES3MP-Linux-aarch64 .
       - name: Generate default config
-        run: cd build/ && chmod +x goTES3MP-Linux-aarm64 && ./goTES3MP-Linux-aarm64
-
+        run: cd build/ && chmod +x goTES3MP-Linux-aarch64 && ./goTES3MP-Linux-aarch64
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            build/goTES3MP-Linux-aarm64
+            build/goTES3MP-Linux-aarch64
             build/config.yaml
   build-windows:
     name: Build Windows
@@ -84,17 +104,28 @@ jobs:
           go-version: ^1.22
           stable: true
         id: windows-build
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+      - name: Generate go files
+        run: |
+          cd src
+          go install google.golang.org/protobuf/cmd/protoc-gen-go
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          go generate
+          cd ..
       - name: Run Tests
         run: go test ./src
       - name: Build-Windows
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Windows.exe src/*.go
-
+        run: | 
+          cd src
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-X 'main.Build=${{ github.event.release.tag_name }}' -X 'main.GitCommit=$GITHUB_SHA'" -o build/goTES3MP-Windows-amd64.exe .
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/goTES3MP-Windows.exe
+          files: build/goTES3MP-Windows-amd64.exe
 
   add-scripts:
     name: Add Scripts

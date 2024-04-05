@@ -1,4 +1,4 @@
-//go:generate protoc --go_out=paths=source_relative:../src --go_opt=paths=source_relative .\protocols\messages.proto
+//go:generate protoc --go_out=. --go_opt=paths=source_relative ./protocols/messages.proto
 //go:generate go run generate_version.go
 package main
 
