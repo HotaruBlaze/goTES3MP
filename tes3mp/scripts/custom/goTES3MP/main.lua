@@ -105,8 +105,8 @@ end
 -- Function to get the server ID.
 --- @return string The server ID.
 goTES3MP.GetServerID = function()
-    if config.goTES3MP.serverid == "" then
-        config.goTES3MP.serverid = goTES3MPModules.utils.randomString(16) 
+    if config.goTES3MP.server_id == "" then
+        config.goTES3MP.server_id = goTES3MPModules.utils.randomString(16) 
         goTES3MPConfig.SaveConfig(config)
     end
     return tostring(config.goTES3MP.serverid)

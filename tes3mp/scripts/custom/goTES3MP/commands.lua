@@ -110,10 +110,10 @@ end
 ---@param discordReplyChannel string
 commands.sendDiscordSlashResponse = function(responseText, commandArgs)
     local messageJson = {
-        jobid = goTES3MPModules.utils.generate_uuid(),
+        job_id = goTES3MPModules.utils.generate_uuid(),
+        server_id = goTES3MP.GetServerID(),
         method = "DiscordSlashCommandResponse",
         source = "TES3MP",
-        serverid = goTES3MP.GetServerID(),
         data = commandArgs
     }
     messageJson["data"]["response"] = responseText  -- Assuming `response` is the response text
@@ -152,10 +152,10 @@ commands.pushSlashCommands = function(pid, cmd)
     commandData.command = cmd[2]
     
     local messageJson = {
-        jobid = goTES3MPModules.utils.generate_uuid(),
+        job_id = goTES3MPModules.utils.generate_uuid(),
         method = "RegisterDiscordSlashCommand",
         source = "TES3MP",
-        serverid = goTES3MP.GetServerID(),
+        server_id = goTES3MP.GetServerID(),
         data = commandData
     }
 
@@ -175,10 +175,10 @@ commands.pushAllSlashCommands = function(pid, cmd)
         commandData.command = cmdName
 
         local messageJson = {
-            jobid = goTES3MPModules.utils.generate_uuid(),
+            job_id = goTES3MPModules.utils.generate_uuid(),
             method = "RegisterDiscordSlashCommand",
             source = "TES3MP",
-            serverid = goTES3MP.GetServerID(),
+            server_id = goTES3MP.GetServerID(),
             data = commandData
         }
 

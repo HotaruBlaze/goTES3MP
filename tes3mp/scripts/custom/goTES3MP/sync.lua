@@ -20,8 +20,8 @@ goTES3MPSync.sendSync = function(forceResync)
 
         -- Construct the synchronization message as a JSON object.
         local messageJson = {
-            jobid = goTES3MPModules.utils.generate_uuid(),
-            ServerID = serverID,
+            job_id = goTES3MPModules.utils.generate_uuid(),
+            server_id = serverID,
             method = "Sync",
             source = "TES3MP",
             data = {

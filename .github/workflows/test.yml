@@ -21,6 +21,9 @@ jobs:
           go-version: ^1.22
           stable: true
 
+      - name: Generate go files
+        run: go generate
+
       - name: Install dependencies
         run: go mod download
 

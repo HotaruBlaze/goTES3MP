@@ -3,19 +3,22 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-type rawDiscordStruct struct {
-	Channel string `json:"channel"`
-	Server  string `json:"server"`
-	Message string `json:"Message"`
-}
+func sendRawDiscordMessage(rawDiscordStruct *protocols.RawDiscordStruct) bool {
+	// check if discord is actually connected first.
+	if DiscordSession.DataReady {
+		_, err := DiscordSession.ChannelMessageSend(rawDiscordStruct.Channel, rawDiscordStruct.Message)
+		checkError("rawDiscordMessage", err)
+		return true
+	} else {
+		log.Errorln("Discord not connected, Message was not sent.")
+		return false
+	}
 
-func sendRawDiscordMessage(rawDiscordStruct rawDiscordStruct) bool {
-	_, err := DiscordSession.ChannelMessageSend(rawDiscordStruct.Channel, rawDiscordStruct.Message)
-	checkError("rawDiscordMessage", err)
-	return true
 }
 
 // messageCreate is a function that handles incoming messages in a Discord server
@@ -28,9 +31,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	discordresponse := baseresponse{
-		JobID:    uuid.New().String(),
-		ServerID: viper.GetViper().GetString("tes3mp.serverid"),
+	discordresponse := protocols.BaseResponse{
+		JobId:    uuid.New().String(),
+		ServerId: viper.GetViper().GetString("tes3mp.serverid"),
 		Method:   "DiscordChat",
 		Source:   "Discord",
 		Target:   "TES3MP",
@@ -65,7 +68,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	discordresponse.Data = discordData
 
-	processRelayMessage(discordresponse)
+	processRelayMessage(&discordresponse)
 }
 
 func getUsersRole(m *discordgo.Message) (string, string) {

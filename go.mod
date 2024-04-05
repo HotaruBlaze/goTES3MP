@@ -6,6 +6,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.2-0.20230816134654-ff9176adccb6
 	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0
+	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.6.0
@@ -15,6 +16,7 @@ require (
 	github.com/thoj/go-ircevent v0.0.0-20210723090443-73e444401d64
 	github.com/tidwall/pretty v1.2.1
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
@@ -25,7 +27,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mitchellh/mapstructure v1.5.0
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect

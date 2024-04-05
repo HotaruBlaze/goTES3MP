@@ -5,48 +5,31 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/golang/protobuf/jsonpb"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-type baseresponse struct {
-	JobID    string            `json:"jobid"`
-	ServerID string            `json:"serverid"`
-	Method   string            `json:"method"`
-	Source   string            `json:"source"`
-	Target   string            `json:"target"`
-	Data     map[string]string `json:"data"`
-}
-
-type commandResponse struct {
-	JobID    string      `json:"jobid"`
-	ServerID string      `json:"serverid"`
-	Method   string      `json:"method"`
-	Source   string      `json:"source"`
-	Data     CommandData `json:"data"`
-}
-
-type CommandArg struct {
-	Required    bool   `json:"required"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type CommandData struct {
-	CommandArgs []*CommandArg `json:"args"`
-	Command     string        `json:"command"`
-	Description string        `json:"description"`
-}
-
 // handleIncomingMessage handles the incoming message and processes it accordingly.
 //
 // It takes a map[string]interface{} as the parameter and returns an interface{} and an error.
-func handleIncomingMessage(data map[string]interface{}) (interface{}, error) {
-	// Extract the method from the data
-	method, ok := data["method"].(string)
-	if !ok {
+func handleIncomingMessage(data *protocols.BaseResponse) (interface{}, error) {
+
+	method := data.Method
+	if len(method) == 0 {
+		return nil, errors.New("method is not a string")
+	}
+
+	processRelayMessage(data)
+	return "", nil
+}
+
+func handleIncomingComamnd(data protocols.DiscordSlashCommand) (interface{}, error) {
+	method := data.Method
+	if len(method) == 0 {
 		return nil, errors.New("method is not a string")
 	}
 
@@ -54,6 +37,15 @@ func handleIncomingMessage(data map[string]interface{}) (interface{}, error) {
 	switch method {
 	// Executing Discord slash command
 	case "DiscordSlashCommand":
+		// Convert this to the correct protocol
+		var incomingData protocols.DiscordSlashCommand
+		unmarshaler := jsonpb.Unmarshaler{}
+
+		err := unmarshaler.Unmarshal(strings.NewReader(data.String()), &incomingData)
+		if err != nil {
+			return nil, err
+		}
+
 		// Print processing message if in debug mode
 		if viper.GetBool("debug") {
 			log.Println("Processing Discord Command:", method)
@@ -65,53 +57,34 @@ func handleIncomingMessage(data map[string]interface{}) (interface{}, error) {
 		if viper.GetBool("debug") {
 			log.Println("Registering a Discord Command:", method)
 		}
-		// Unmarshal the data into commandResponse struct
-		var incomingData commandResponse
-		jsonData, err := json.Marshal(data)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(jsonData, &incomingData)
-		if err != nil {
-			return nil, err
-		}
-
 		// Process the Discord command
-		processDiscordCommand(incomingData)
+		VerifyDiscordCommand(data)
 
 		// Ensure commandResponses.Commands map is initialized
 		if commandResponses.Commands == nil {
-			commandResponses.Commands = make(map[string]CommandData)
+			commandResponses.Commands = make(map[string]protocols.CommandData)
 		}
 
 		// Add the new command to commandResponses
-		newCommand := CommandData{
-			Command:     incomingData.Data.Command,
-			Description: incomingData.Data.Description,
-			CommandArgs: incomingData.Data.CommandArgs,
+		newCommand := protocols.CommandData{
+			Command:     data.Data.Command,
+			Description: data.Data.Description,
+			Args:        data.Data.Args,
 		}
-		commandResponses.Commands[incomingData.Data.Command] = newCommand
+		commandResponses.Commands[data.Data.Command] = newCommand
 
 		// Create a string slice of argument names
 		var argStrings []string
-		for _, arg := range incomingData.Data.CommandArgs {
+		for _, arg := range data.Data.Args {
 			argStrings = append(argStrings, arg.Name) // Or whatever field you want to pass as string
 		}
 
 		// Call AddDiscordCommand with the converted arguments
-		AddDiscordCommand(&commandResponses, incomingData.Data.Command, newCommand.Description, argStrings...)
+		AddDiscordCommand(&commandResponses, data.Data.Command, data.Data.Description, argStrings...)
 
-		return incomingData, nil
+		return "", nil
 	default:
-		// Print the method if it is not handled by specific logic above.
-		// Decode the data into baseresponse struct and process the relay message
-		var res baseresponse
-		err := mapstructure.Decode(data, &res)
-		if err != nil {
-			return nil, err
-		}
-		processRelayMessage(res)
-		return res, nil
+		return "", nil
 	}
 }
 
@@ -119,9 +92,9 @@ func handleIncomingMessage(data map[string]interface{}) (interface{}, error) {
 //
 // s: baseresponse object containing the relay message data
 // returns: true if the relay message is processed successfully, false otherwise
-func processRelayMessage(s baseresponse) bool {
+func processRelayMessage(s *protocols.BaseResponse) bool {
 	// Convert the baseresponse to a pointer
-	res := &s
+	res := s
 
 	// Perform sanity check on the relay message
 	err := processRelayMessageSanityCheck(res)
@@ -138,7 +111,7 @@ func processRelayMessage(s baseresponse) bool {
 	}
 
 	// Check if ServerID is missing from the response
-	if len(res.ServerID) == 0 {
+	if len(res.ServerId) == 0 {
 		log.Warnln("ServerID Missing from response:")
 		return false
 	}
@@ -146,7 +119,7 @@ func processRelayMessage(s baseresponse) bool {
 	// Process the relay message based on the method
 	switch res.Method {
 	case "Sync":
-		serverSync(res.ServerID, res)
+		serverSync(res.ServerId, res)
 	case "IRC":
 		log.Println("TODO: Method \"IRC\" Not Implemented Yet.")
 	case "DiscordChat":
@@ -159,7 +132,7 @@ func processRelayMessage(s baseresponse) bool {
 		logRelayedMessages("Discord", usrMsg)
 	case "rawDiscord":
 		// Process the relay message for raw Discord
-		var m rawDiscordStruct
+		var m protocols.RawDiscordStruct
 		m.Channel = res.Data["channel"]
 		m.Server = res.Data["server"]
 		m.Message = res.Data["message"]
@@ -170,7 +143,7 @@ func processRelayMessage(s baseresponse) bool {
 			return false
 		} else {
 			// Send the raw Discord message and log the relayed message
-			status := sendRawDiscordMessage(m)
+			status := sendRawDiscordMessage(&m)
 			logRelayedMessages("TES3MP", m.Message)
 			return status
 		}
@@ -189,16 +162,16 @@ func processRelayMessage(s baseresponse) bool {
 	return false
 }
 
-func processDiscordCommand(s commandResponse) bool {
-	res := &s
-	err := processRelayCommandSanityCheck(res)
+func VerifyDiscordCommand(s protocols.DiscordSlashCommand) bool {
+
+	err := processRelayCommandSanityCheck(&s)
 	if err != nil {
-		log.Errorln("processDiscordCommand failed.")
+		log.Errorln("VerifyDiscordCommand failed.")
 		log.Errorf("Err %s", err)
 		return false
 	}
 
-	if len(res.ServerID) == 0 {
+	if len(s.ServerId) == 0 {
 		log.Warnln("ServerID Missing from response:")
 		return false
 	}
@@ -207,9 +180,9 @@ func processDiscordCommand(s commandResponse) bool {
 }
 
 // processVPNCheck is a function that processes VPN checks for a given response.
-func processVPNCheck(res *baseresponse) {
+func processVPNCheck(res *protocols.BaseResponse) {
 	// Create a rawDiscordStruct from the data in the response
-	m := rawDiscordStruct{
+	m := protocols.RawDiscordStruct{
 		Channel: res.Data["channel"],
 		Server:  res.Data["server"],
 		Message: res.Data["message"],
@@ -244,14 +217,14 @@ func logRelayedMessages(server string, message string) {
 // processRelayMessageSanityCheck checks the sanity of the relay message.
 // It ensures that the method is not blank and that data is provided.
 // If any of the checks fail, it returns an error.
-func processRelayMessageSanityCheck(relayMsg *baseresponse) error {
+func processRelayMessageSanityCheck(relayMsg *protocols.BaseResponse) error {
 	// Check if the method is blank
 	if relayMsg.Method == "" {
 		return fmt.Errorf("method cannot be blank")
 	}
 
 	// Check if jobid is blank
-	if relayMsg.JobID == "" {
+	if relayMsg.JobId == "" {
 		return fmt.Errorf("jobid cannot be blank")
 	}
 
@@ -267,14 +240,14 @@ func processRelayMessageSanityCheck(relayMsg *baseresponse) error {
 // processRelayMessageSanityCheck checks the sanity of the relay message.
 // It ensures that the method is not blank and that data is provided.
 // If any of the checks fail, it returns an error.
-func processRelayCommandSanityCheck(relayMsg *commandResponse) error {
+func processRelayCommandSanityCheck(relayMsg *protocols.DiscordSlashCommand) error {
 	// Check if the method is blank
 	if relayMsg.Method == "" {
 		return fmt.Errorf("method cannot be blank")
 	}
 
 	// Check if jobid is blank
-	if relayMsg.JobID == "" {
+	if relayMsg.JobId == "" {
 		return fmt.Errorf("jobid cannot be blank")
 	}
 

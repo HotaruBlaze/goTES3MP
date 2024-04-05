@@ -1,10 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"io"
+	"os"
+	"strings"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	irc "github.com/thoj/go-ircevent"
@@ -51,14 +54,46 @@ func InitIRC() {
 	irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
 		go func(event *irc.Event) {
 			if event.Arguments[0] == systemchannel {
-				var baseMsg map[string]interface{}
-				err := json.Unmarshal([]byte(event.Message()), &baseMsg)
+				// Parse a fuzzy metadata protocol to get the method
+				var metadata protocols.Metadata
+				metadata_unmarshaler := jsonpb.Unmarshaler{
+					AllowUnknownFields: true,
+				}
+				unmarshaler := jsonpb.Unmarshaler{}
+
+				err := metadata_unmarshaler.Unmarshal(strings.NewReader(event.Message()), &metadata)
 				if err != nil {
-					checkError("[IRC:AddCallback]: PRIVMSG 1", err)
-				} else {
-					_, err := handleIncomingMessage(baseMsg)
-					if err != nil {
-						checkError("[IRC:AddCallback]: PRIVMSG 2", err)
+					checkError("[IRC:AddCallback]: PRIVMSG 0", err)
+				}
+
+				switch metadata.Method {
+				case "RegisterDiscordSlashCommand":
+					{
+						// Now parse this as a Discord Slash Command
+						var dataPacket protocols.DiscordSlashCommand
+						err := unmarshaler.Unmarshal(strings.NewReader(event.Message()), &dataPacket)
+						if err != nil {
+							checkError("[IRC:AddCallback]: PRIVMSG 1", err)
+						} else {
+							_, err := handleIncomingComamnd(dataPacket)
+							if err != nil {
+								checkError("[IRC:AddCallback]["+metadata.Method+"] PRIVMSG 2", err)
+							}
+						}
+					}
+				default:
+					{
+						// Now parse this as a normal system message
+						var dataPacket protocols.BaseResponse
+						err := unmarshaler.Unmarshal(strings.NewReader(event.Message()), &dataPacket)
+						if err != nil {
+							checkError("[IRC:AddCallback]: PRIVMSG 1", err)
+						} else {
+							_, err := handleIncomingMessage(&dataPacket)
+							if err != nil {
+								checkError("[IRC:AddCallback]: PRIVMSG 2", err)
+							}
+						}
 					}
 				}
 			}
@@ -70,6 +105,8 @@ func InitIRC() {
 	if err != nil {
 		log.Errorln("Failed to connect to IRC")
 		log.Errorf("Err %s", err)
+		// This will hang if we forget this, but it's better than ignoring sig interrupt
+		os.Exit(1)
 	}
 
 	// Start IRC loop

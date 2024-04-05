@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
 	log "github.com/sirupsen/logrus"
 )
 
 type CommandResponses struct {
-	Commands map[string]CommandData `json:"commands"`
+	Commands map[string]protocols.CommandData `json:"commands"`
 }
 
 var commandResponses CommandResponses
@@ -22,9 +23,9 @@ func AddDiscordCommand(data *CommandResponses, command string, description strin
 	}
 
 	// Create CommandArg objects for each argument
-	commandArgs := make([]*CommandArg, len(args))
+	commandArgs := make([]*protocols.CommandArg, len(args))
 	for i, arg := range args {
-		commandArgs[i] = &CommandArg{
+		commandArgs[i] = &protocols.CommandArg{
 			Required:    true,
 			Name:        arg,
 			Description: description,
@@ -32,10 +33,10 @@ func AddDiscordCommand(data *CommandResponses, command string, description strin
 	}
 
 	// Add the new CommandData to the Commands map in the data
-	data.Commands[command] = CommandData{
+	data.Commands[command] = protocols.CommandData{
 		Command:     command,
 		Description: description,
-		CommandArgs: commandArgs,
+		Args:        commandArgs,
 	}
 
 	// Create a new slash command

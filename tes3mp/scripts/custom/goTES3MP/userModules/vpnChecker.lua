@@ -95,8 +95,8 @@ customEventHooks.registerHandler(
 
         local IP = tes3mp.GetIP(pid)
         local messageJson = {
-            jobid = goTES3MPModules.utils.generate_uuid(),
-            serverid = goTES3MP.GetServerID(),
+            job_id = goTES3MPModules.utils.generate_uuid(),
+            server_id = goTES3MP.GetServerID(),
             method = "VPNCheck",
             source = "TES3MP",
             data = {

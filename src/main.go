@@ -1,3 +1,4 @@
+//go:generate protoc --go_out=paths=source_relative:../src --go_opt=paths=source_relative .\protocols\messages.proto
 package main
 
 import (

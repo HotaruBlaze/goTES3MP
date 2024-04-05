@@ -53,10 +53,10 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
         return
     end
     local messageJson = {
-        jobid = goTES3MPUtils.generate_uuid(),
+        job_id = goTES3MPUtils.generate_uuid(),
         method = "rawDiscord",
         source = "TES3MP",
-        serverid = ServerID,
+        server_id = ServerID,
         data = {
             channel = channel,
 			server = server,

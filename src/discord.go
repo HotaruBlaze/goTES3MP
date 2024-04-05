@@ -11,6 +11,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -95,17 +96,18 @@ func handleDiscordCommands(s *discordgo.Session, i *discordgo.InteractionCreate)
 		commandArgs = string(commandArgs)
 
 		// Find and execute the corresponding functionality based on the command name
-		if _, ok := commandResponses.Commands[commandName]; ok {
+		_, ok := commandResponses.Commands[commandName]
+		if ok {
 			// Build a DiscordCommand packet for TES3MP
-			discordCommand := baseresponse{
-				JobID:    uuid.New().String(),
-				ServerID: viper.GetString("tes3mp.serverid"),
+			discordCommand := &protocols.BaseResponse{
+				JobId:    uuid.New().String(),
+				ServerId: viper.GetString("tes3mp.serverid"),
 				Method:   "Command",
 				Source:   "DiscordCommand",
 				Target:   "TES3MP",
 				Data: map[string]string{
 					"command":                 commandName,
-					"args":                    commandArgs,
+					"commandArgs":             commandArgs,
 					"discordInteractiveToken": string(i.Interaction.Token),
 				},
 			}
@@ -176,7 +178,7 @@ func createSlashCommand(command string) error {
 	var options []*discordgo.ApplicationCommandOption
 
 	// Map each command argument to a discordgo.ApplicationCommandOption
-	for _, arg := range tes3mpCommand.CommandArgs {
+	for _, arg := range tes3mpCommand.Args {
 		// Determine the type of the argument based on your requirements
 		optionType := discordgo.ApplicationCommandOptionString // For example, assuming all args are strings
 

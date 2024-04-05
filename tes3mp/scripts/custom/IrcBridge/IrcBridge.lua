@@ -14,7 +14,7 @@ local goTES3MPModules = nil
 
 local IrcBridge = {}
 
-IrcBridge.version = "v0.4.0-goTES3MP"
+IrcBridge.version = "v0.4.1-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
 IrcBridge.maxMessageLength = 2048
@@ -68,7 +68,7 @@ IrcBridge.RecvMessage = function()
                         end,
                         ["Command"] = function()
                             local command = response.data.command
-                            local commandArgs = goTES3MPModules.utils.isJsonValidDecode(response.data.args)
+                            local commandArgs = goTES3MPModules.utils.isJsonValidDecode(response.data.commandArgs)
                             tes3mp.LogMessage(enumerations.log.INFO, "[GoTES3MP:Command] Executing command \"" .. command .. "\" with args {" .. tableHelper.getSimplePrintableTable(commandArgs).."}")
                             commandArgs["discordInteractiveToken"] = response.data["discordInteractiveToken"]
 
