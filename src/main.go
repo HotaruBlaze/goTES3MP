@@ -1,4 +1,5 @@
 //go:generate protoc --go_out=paths=source_relative:../src --go_opt=paths=source_relative .\protocols\messages.proto
+//go:generate go run generate_version.go
 package main
 
 import (
@@ -96,6 +97,8 @@ func main() {
 			args := strings.Split(command, " ")
 
 			switch strings.ToLower(args[0]) {
+			case "updates":
+				checkforUpdates()
 			case "status":
 				handleStatusCommand()
 			case "reloadirc":
