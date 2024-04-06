@@ -39,5 +39,5 @@ var ircBridgeVersion = "%s"
 		return
 	}
 
-	fmt.Println("Version set to", version)
+	fmt.Println("Pinning goTES3MP's IRCBridge version to", version)
 }

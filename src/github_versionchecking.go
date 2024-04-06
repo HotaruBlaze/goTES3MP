@@ -144,10 +144,10 @@ func getStatus(firstLaunch bool, showModules bool) {
 		_, isSafeLuaUpdate := fetchIrcBridgeVersionFromGithub()
 		if isSafeLuaUpdate {
 			// If Lua updates are safe
-			color.HiGreen("A new version of goTES3MP is available:  " + Build + " -> " + UpdateVersion + ".\nYour IRC bridge version should be compatible.")
+			color.HiGreen("A new version of goTES3MP is available: " + Build + " -> " + UpdateVersion + ".\nYour IRC bridge version should be compatible.")
 		} else {
 			// If Lua updates are not safe
-			color.HiYellow("A new version of goTES3MP is available: " + Build + " -> " + UpdateVersion + ".\nHowever, the IRC bridge version may not be compatible.")
+			color.HiYellow("A new version of goTES3MP is available: " + Build + " -> " + UpdateVersion + ".\nHowever, the IRCBridge version may not be compatible.")
 		}
 	}
 
