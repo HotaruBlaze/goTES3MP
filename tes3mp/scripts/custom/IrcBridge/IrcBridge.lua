@@ -7,19 +7,17 @@
 
 require("color")
 local irc = require("irc")
-local cjson = require("cjson")
 
-local goTES3MPSync = require("custom.goTES3MP.sync")
-local goTES3MPUtils = require("custom.goTES3MP.utils")
-local goTES3MPCommands = require("custom.goTES3MP.commands")
 local goTES3MPConfig = require("custom.goTES3MP.config")
-local goTES3MPVPNChecker = require("custom.goTES3MP.vpnChecker")
+local goTES3MPSync = require("custom.goTES3MP.sync")
+local goTES3MPModules = nil
 
 local IrcBridge = {}
 
-IrcBridge.version = "v5.0.0-goTES3MP"
+IrcBridge.version = "v0.4.1-goTES3MP"
 IrcBridge.scriptName = "IrcBridge"
 IrcBridge.debugMode = false
+IrcBridge.maxMessageLength = 2048
 
 local config = goTES3MPConfig.GetConfig()
 
@@ -62,26 +60,32 @@ IrcBridge.RecvMessage = function()
                     print("IRCDebug: " .. message)
                 end
 
-                local response = goTES3MPUtils.isJsonValidDecode(message)
+                local response = goTES3MPModules.utils.isJsonValidDecode(message)
+                if response ~= nil then
+                    IrcBridge.switch(response.method) {
+                        ["Sync"] = function()
+                            goTES3MPSync.gotSync(response.ServerID, response.SyncID)
+                        end,
+                        ["Command"] = function()
+                            local command = response.data.command
+                            local commandArgs = goTES3MPModules.utils.isJsonValidDecode(response.data.commandArgs)
+                            tes3mp.LogMessage(enumerations.log.INFO, "[GoTES3MP:Command] Executing command \"" .. command .. "\" with args {" .. tableHelper.getSimplePrintableTable(commandArgs).."}")
+                            commandArgs["discordInteractiveToken"] = response.data["discordInteractiveToken"]
 
-                IrcBridge.switch(response.method) {
-                    ["Sync"] = function()
-                        goTES3MPSync.GotSync(response.ServerID, response.SyncID)
-                    end,
-                    ["Command"] = function()
-                        goTES3MPCommands.processCommand(response.data["TargetPlayer"],response.data["Command"],response.data["CommandArgs"], response.data["replyChannel"])
-                    end,
-                    ["DiscordChat"] = function()
-                        IrcBridge.chatMessage(response)
-                    end,
-                    ["VPNCheck"] = function()
-                        goTES3MPVPNChecker.kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
-                    end,
-                    default = function()
-                        print("Error: "..tableHelper.getSimplePrintableTable(response))
-                        print("Unknown method (" .. response.method .. ") was received.")
-                    end,
-                }
+                            goTES3MPModules.commands.processCommand(command, commandArgs)
+                        end,
+                        ["DiscordChat"] = function()
+                            IrcBridge.chatMessage(response)
+                        end,
+                        ["VPNCheck"] = function()
+                            goTES3MPModules.vpnChecker.kickPlayer(response.data["playerpid"], response.data["kickPlayer"])
+                        end,
+                        default = function()
+                            print("Error: "..tableHelper.getSimplePrintableTable(response))
+                            print("Unknown method (" .. response.method .. ") was received.")
+                        end,
+                    }
+                end
             end
             lastMessage = message
         end
@@ -112,6 +116,10 @@ IrcBridge.chatMessage = function(response)
 end
 
 IrcBridge.SendSystemMessage = function(message)
+    if string.len(message) > IrcBridge.maxMessageLength then
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:IRCBridge] SendSystemMessage was skipped due to message length exceeding limit.")
+        return
+    end
     if message ~= lastMessage then
         s:sendChat(systemchannel, message)
         lastMessage = message
@@ -141,6 +149,7 @@ customEventHooks.registerValidator(
     function()
         IRCTimerId = tes3mp.CreateTimer("OnIRCUpdate", time.seconds(1))
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP:IRCBridge] ".. IrcBridge.version.. " Loaded")
+        goTES3MPModules = goTES3MP.GetModules()
         tes3mp.StartTimer(IRCTimerId)
     end
 )

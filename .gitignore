@@ -2,4 +2,5 @@ goTES3MP/logs/
 build/
 config.yaml
 goTES3MP/data.json
+version.go
 .vscode/

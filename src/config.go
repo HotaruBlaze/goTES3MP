@@ -1,3 +1,6 @@
+//go:build !test
+// +build !test
+
 package main
 
 import (
@@ -9,7 +12,7 @@ import (
 )
 
 // LoadConfig loads json config file
-func LoadConfig() (ConfigLoaded bool) {
+func loadConfig() (ConfigLoaded bool) {
 	var configPath = "./config.yaml"
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -40,6 +43,7 @@ func LoadConfig() (ConfigLoaded bool) {
 	viper.SetDefault("discord.enable", false)
 	viper.SetDefault("discord.allowColorHexUsage", false)
 	viper.SetDefault("discord.token", "")
+	viper.SetDefault("discord.guildID", "")
 	viper.SetDefault("discord.alertsChannel", "")
 	viper.SetDefault("discord.serverChat", "")
 	viper.SetDefault("discord.staffRoles", []string{})
@@ -54,7 +58,7 @@ func LoadConfig() (ConfigLoaded bool) {
 			log.Infoln("[Viper]", "Created default config")
 			os.Exit(0)
 		} else {
-			log.Errorf("[Viper]", "Fatal error reading config file: %v", err)
+			log.Errorf("[Viper] Fatal error reading config file: %v", err)
 			panic(1)
 		}
 	}

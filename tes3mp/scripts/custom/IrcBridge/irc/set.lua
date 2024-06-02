@@ -1,5 +1,9 @@
-local select = require "socket".select
-
+local socket = nil
+if package.config:sub(1,1) == "/" then
+	socket = require "socket-lanes"
+else
+	socket = require "socket"
+end
 local setmetatable = setmetatable
 local insert = table.insert
 local remove = table.remove

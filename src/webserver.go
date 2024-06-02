@@ -25,11 +25,11 @@ func InitWebserver() {
 // status : Print current ServerStatus struct as json
 func status(w http.ResponseWriter, r *http.Request) {
 	s := UpdateStatus()
-	status := pretty.Pretty(s)
 	if s == nil {
 		log.Errorln("UpdateStatus returned nil")
-		fmt.Fprintf(w, string("An Error Occurred while getting /status"))
-	} else {
-		fmt.Fprintf(w, string(status))
+		fmt.Fprint(w, "An Error Occurred while getting /status")
+		return
 	}
+	status := pretty.Pretty(s)
+	fmt.Fprint(w, status)
 }

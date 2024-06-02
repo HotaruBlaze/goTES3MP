@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package main;
+option go_package = "github.com/hotarublaze/gotes3mp";
+
+message RawDiscordStruct {
+    string channel = 1;
+    string server = 2;
+    string message = 3;
+}
+
+message ServerSync {
+    string job_id = 1;
+    string server_id = 2;
+    string status = 3;
+    string method = 4;
+}
+
+// Messages related to responses and commands
+message BaseResponse {
+    string job_id = 1;
+    string server_id = 2;
+    string method = 3;
+    string source = 4;
+    string target = 5;
+    map<string, string> data = 6;
+}
+
+message CommandArg {
+    bool required = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message CommandData {
+    string command = 1;
+    string description = 2;
+    repeated CommandArg args = 3;
+}
+
+message CommandResponse {
+    string job_id = 1;
+    string server_id = 2;
+    string method = 3;
+    string source = 4;
+    CommandData data = 5;
+}
+
+message DiscordSlashCommand {
+    string server_id = 1;
+    string method = 2;
+    string source = 3;
+    string job_id = 4;
+    CommandData data = 5;
+}
+
+message Metadata {
+    string method = 1;
+    string source = 2;
+    string server_id = 3;
+    string job_id = 4;
+    map<string, string> additional_data = 5;
+}

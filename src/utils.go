@@ -11,7 +11,7 @@ import (
 )
 
 // AppendIfMissing : Appends string if missing from array.
-func AppendIfMissing(slice []string, i string) []string {
+func appendIfMissing(slice []string, i string) []string {
 	currentSlice := slice
 	for _, ele := range currentSlice {
 		if ele == i {
@@ -81,32 +81,30 @@ func bToMb(b uint64) uint64 {
 	return b / 1024 / 1024
 }
 
-// convertDiscordFormattedItems : Formats Discord Formatted Items to Text Only
+// convertDiscordFormattedItems formats Discord formatted items to text only.
 func convertDiscordFormattedItems(str string, gid string) string {
-	// match all discord formatted items
 	reChannel := regexp.MustCompile(`<#(\d+)>`)
 	reMentionUser := regexp.MustCompile(`<@(?:\!)?(\d+)>`)
 	reMentionRole := regexp.MustCompile(`<@&(\d+)>`)
 
+	// Replace channel mentions with channel names
 	str = reChannel.ReplaceAllStringFunc(str, func(s string) string {
-		// get the channels for this guild
 		id := reChannel.FindStringSubmatch(s)[1]
 		channels, err := DiscordSession.GuildChannels(gid)
 		if err != nil {
 			log.Errorln("[utils:convertDiscordFormattedItems]", "Error getting guild channels: ", err)
 			return s
 		}
-		for _, c := range channels {
-			if c.ID == id {
-				return "<%" + c.Name + ">"
+		for _, channel := range channels {
+			if channel.ID == id {
+				return "<%" + channel.Name + ">"
 			}
 		}
-
 		return s
 	})
-	reMentionUser.FindAllStringSubmatchIndex(str, -1)
+
+	// Replace user mentions with user names
 	str = reMentionUser.ReplaceAllStringFunc(str, func(s string) string {
-		// get the user for this guild
 		id := reMentionUser.FindStringSubmatch(s)[1]
 		member, err := DiscordSession.GuildMember(gid, id)
 		if err != nil {
@@ -119,30 +117,29 @@ func convertDiscordFormattedItems(str string, gid string) string {
 			return "<@" + member.User.Username + ">"
 		}
 	})
+
+	// Replace role mentions with role names
 	str = reMentionRole.ReplaceAllStringFunc(str, func(s string) string {
-		// get the role for this guild
 		id := reMentionRole.FindStringSubmatch(s)[1]
 		roles, err := DiscordSession.GuildRoles(gid)
 		if err != nil {
 			log.Errorln("[utils:convertDiscordFormattedItems]", "Error getting guild roles: ", err)
 			return s
 		}
-		for _, r := range roles {
-			if r.ID == id {
-				return "<%@" + r.Name + ">"
+		for _, role := range roles {
+			if role.ID == id {
+				return "<%@" + role.Name + ">"
 			}
 		}
 		return s
 	})
+
 	return str
 }
 
 // filterDiscordEmotes : Formats Discord Emotes Correctly
 func filterDiscordEmotes(str string) string {
-	re := regexp.MustCompile(`<:(\S+):\d+>`)
-	filteredString := re.ReplaceAllString(str, `:$1:`)
-
-	return filteredString
+	return regexp.MustCompile(`<:(\S+):\d+>`).ReplaceAllString(str, `:$1:`)
 }
 
 // MemoryDebugInfo : Print current memory and GC cycles, Used for monitoring for memory leaks
@@ -155,18 +152,9 @@ func MemoryDebugInfo() {
 
 }
 
-// func trimLeftChar(s string) string {
-// 	for i := range s {
-// 		if i > 0 {
-// 			return s[i:]
-// 		}
-// 	}
-// 	return s[:0]
-// }
-
 func checkError(str string, err error) bool {
 	if err != nil {
-		log.Errorf(str, err)
+		log.Errorf("%s - %s", str, err)
 		return true
 	}
 	return false

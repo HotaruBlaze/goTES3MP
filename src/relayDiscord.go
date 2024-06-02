@@ -2,85 +2,73 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-type rawDiscordStruct struct {
-	Channel string `json:"channel"`
-	Server  string `json:"server"`
-	Message string `json:"Message"`
+func sendRawDiscordMessage(rawDiscordStruct *protocols.RawDiscordStruct) bool {
+	// check if discord is actually connected first.
+	if DiscordSession.DataReady {
+		_, err := DiscordSession.ChannelMessageSend(rawDiscordStruct.Channel, rawDiscordStruct.Message)
+		checkError("rawDiscordMessage", err)
+		return true
+	} else {
+		log.Errorln("Discord not connected, Message was not sent.")
+		return false
+	}
+
 }
 
-func rawDiscordMessage(rawDiscordStruct rawDiscordStruct) bool {
-	_, err := DiscordSession.ChannelMessageSend(rawDiscordStruct.Channel, rawDiscordStruct.Message)
-	checkError("rawDiscordMessage", err)
-	return true
-}
-
+// messageCreate is a function that handles incoming messages in a Discord server
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID || len(m.Content) == 0 {
 		return
 	}
-	if len(m.Content) > 0 {
-		if m.Content[:1] == viper.GetString("discord.commandprefix") && isStaffMember(m.Author.ID, m.GuildID) {
-			discordCommandHandler(s, m)
-			return
-		}
-	}
+
 	if m.ChannelID != viper.GetString("discord.serverchat") {
 		return
 	}
-	var discordresponse baseresponse
 
-	discordresponse.ServerID = viper.GetViper().GetString("tes3mp.serverid")
-	discordresponse.Method = "DiscordChat"
-	discordresponse.Source = "Discord"
-	discordresponse.Target = "TES3MP"
-	var user, message string
-
-	if !allowcolorhexusage(m.Message) {
-		message = removeRGBHex(m.Content)
-	} else {
-		message = m.Content
+	discordresponse := protocols.BaseResponse{
+		JobId:    uuid.New().String(),
+		ServerId: viper.GetViper().GetString("tes3mp.serverid"),
+		Method:   "DiscordChat",
+		Source:   "Discord",
+		Target:   "TES3MP",
 	}
 
-	// Convert all <@ >, <# >, and similarly formatted items in Discord messages to something we can actually read.
+	message := m.Content
+	if !allowColorHexUsage(m.Message) {
+		message = removeRGBHex(message)
+	}
 	message = convertDiscordFormattedItems(message, m.GuildID)
-
-	// Convert <:example:868167672758693909> to :example:
 	message = filterDiscordEmotes(message)
 
 	guildMember, err := s.GuildMember(m.GuildID, m.Message.Author.ID)
 	checkError("[RelayDiscord]: guildMember ", err)
-	hasNickname := guildMember.Nick
 
-	if len(hasNickname) > 0 {
-		user = hasNickname
-	} else {
-		user = m.Author.Username
+	user := guildMember.Nick
+	if user == "" {
+		user = guildMember.User.GlobalName
+	}
+	if user == "" {
+		user = guildMember.User.Username
 	}
 
-	var discordData map[string]string
 	roleName, roleColor := getUsersRole(m.Message)
-	if len(roleName) > 0 && len(roleColor) > 0 {
-		discordData = map[string]string{
-			"User":      user,
-			"Message":   message,
-			"RoleName":  roleName,
-			"RoleColor": roleColor, // last comma is a must
-		}
-	} else {
-		discordData = map[string]string{
-			"User":      user,
-			"Message":   message,
-			"RoleName":  "",
-			"RoleColor": "", // last comma is a must
-		}
 
+	discordData := map[string]string{
+		"User":      user,
+		"Message":   message,
+		"RoleName":  roleName,
+		"RoleColor": roleColor,
 	}
 
 	discordresponse.Data = discordData
-	processRelayMessage(discordresponse)
+
+	processRelayMessage(&discordresponse)
 }
 
 func getUsersRole(m *discordgo.Message) (string, string) {

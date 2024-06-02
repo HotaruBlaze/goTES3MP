@@ -1,10 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"io"
+	"os"
+	"strings"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
+	protocols "github.com/hotarublaze/gotes3mp/src/protocols"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	irc "github.com/thoj/go-ircevent"
@@ -19,23 +22,26 @@ var password string
 var irccon *irc.Connection
 var connectedToIRC bool
 
-// InitIRC : Initialize IRC
+// InitIRC initializes the IRC connection using the configuration from viper
 func InitIRC() {
+	// Retrieve IRC configuration from viper
 	ircServer = viper.GetString("irc.server")
 	ircPort = viper.GetString("irc.port")
 	ircNick = viper.GetString("irc.nick")
 
-	// IRC "System Channe;"
+	// Define IRC channels and password
 	systemchannel = viper.GetString("irc.systemchannel")
-	// Add a extra channel for Talking via IRC
 	chatchannel = viper.GetString("irc.chatchannel")
-
 	password = viper.GetString("irc.pass")
+
+	// Initialize IRC connection
 	irccon = irc.IRC(ircNick, ircNick)
 	irccon.Debug = false
-	irccon.Log.SetOutput(ioutil.Discard)
+	irccon.Log.SetOutput(io.Discard)
 	irccon.UseTLS = false
 	irccon.Password = password
+
+	// Handle IRC connection events
 	irccon.AddCallback("001", func(e *irc.Event) {
 		log.Infoln("[IRC] Connected to", ircServer+":"+ircPort, "as", ircNick)
 		irccon.Join(systemchannel)
@@ -48,25 +54,63 @@ func InitIRC() {
 	irccon.AddCallback("PRIVMSG", func(event *irc.Event) {
 		go func(event *irc.Event) {
 			if event.Arguments[0] == systemchannel {
-				var baseMsg baseresponse
-				err := json.Unmarshal([]byte(event.Message()), &baseMsg)
-				if err != nil {
-					checkError("[IRC:AddCallback]: PRIVMSG", err)
-					return
+				// Parse a fuzzy metadata protocol to get the method
+				var metadata protocols.Metadata
+				metadata_unmarshaler := jsonpb.Unmarshaler{
+					AllowUnknownFields: true,
 				}
-				processRelayMessage(baseMsg)
-			}
+				unmarshaler := jsonpb.Unmarshaler{}
 
+				err := metadata_unmarshaler.Unmarshal(strings.NewReader(event.Message()), &metadata)
+				if err != nil {
+					checkError("[IRC:AddCallback]: PRIVMSG 0", err)
+				}
+
+				switch metadata.Method {
+				case "RegisterDiscordSlashCommand":
+					{
+						// Now parse this as a Discord Slash Command
+						var dataPacket protocols.DiscordSlashCommand
+						err := unmarshaler.Unmarshal(strings.NewReader(event.Message()), &dataPacket)
+						if err != nil {
+							checkError("[IRC:AddCallback]: PRIVMSG 1", err)
+						} else {
+							_, err := handleIncomingComamnd(dataPacket)
+							if err != nil {
+								checkError("[IRC:AddCallback]["+metadata.Method+"] PRIVMSG 2", err)
+							}
+						}
+					}
+				default:
+					{
+						// Now parse this as a normal system message
+						var dataPacket protocols.BaseResponse
+						err := unmarshaler.Unmarshal(strings.NewReader(event.Message()), &dataPacket)
+						if err != nil {
+							checkError("[IRC:AddCallback]: PRIVMSG 1", err)
+						} else {
+							_, err := handleIncomingMessage(&dataPacket)
+							if err != nil {
+								checkError("[IRC:AddCallback]: PRIVMSG 2", err)
+							}
+						}
+					}
+				}
+			}
 		}(event)
 	})
+
+	// Connect to IRC server
 	err := irccon.Connect(ircServer + ":" + ircPort)
 	if err != nil {
 		log.Errorln("Failed to connect to IRC")
 		log.Errorf("Err %s", err)
+		// This will hang if we forget this, but it's better than ignoring sig interrupt
+		os.Exit(1)
 	}
 
+	// Start IRC loop
 	log.Println(tes3mpLogMessage, "IRC Module is now running")
-
 	connectedToIRC = true
 	irccon.Loop()
 }
@@ -85,30 +129,26 @@ func ircReconnect() {
 	}
 	log.Println(tes3mpLogMessage, "[IRC] Module Loading...")
 
-	for {
+	for count < 6 {
 		time.Sleep(10 * time.Second)
-		if count < 6 {
-			currentstatus := irccon.Connected()
-			if !currentstatus {
-				connectedToIRC = false
-				count++
-				err := irccon.Reconnect()
-				if err != nil {
-					log.Fatal(err)
-				} else {
-					connectedToIRC = true
-				}
-			}
-
-			if connectedToIRC && irccon.Connected() {
-				log.Println(tes3mpLogMessage, "[IRC] Module online...")
-				return
+		currentstatus := irccon.Connected()
+		if !currentstatus {
+			connectedToIRC = false
+			count++
+			err := irccon.Reconnect()
+			if err != nil {
+				log.Fatal(err)
+			} else {
+				connectedToIRC = true
 			}
 		}
-		log.Error("Unable to Reconnect to IRC within 60 seconds.")
-		return
-	}
 
+		if connectedToIRC && irccon.Connected() {
+			log.Println(tes3mpLogMessage, "[IRC] Module online...")
+			return
+		}
+	}
+	log.Error("Unable to Reconnect to IRC within 60 seconds.")
 }
 
 // IRCSendMessage : Send message to IRC Channel

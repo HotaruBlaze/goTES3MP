@@ -1,115 +1,135 @@
 local commands = {}
-local goTES3MPUtils = require("custom.goTES3MP.utils")
-local goTES3MPgetJournal = require("custom.goTES3MP.getJournal")
-local goTES3MPgetPlayers = require("custom.goTES3MP.getPlayers")
+local goTES3MPModules = goTES3MP.GetModules()
 
-commands.kickPlayer = function(player, discordReplyChannel)
-    targetPid = commands.getPlayerPID(player)
-    if targetPid ~= nil then
-        tes3mp.SendMessage(
-            targetPid,
-            color.Red .. "[SYSTEM]" .. " " .. "You have been kicked by an Administrator.",
-            false
-        )
-        tes3mp.Kick(targetPid)
-        commands.Sendresponse(discordReplyChannel)
-    end
-end
+---@class CommandHandler
+---@field description string
+---@field handler fun(player: string, commandArgs: string[], discordReplyChannel: string)
+---@type table<string, CommandHandler>
+local commandHandlers = {
+    ["kickplayer"] = {
+        description = "Kicks the specified player from the tes3mp server.",
+        handler = function(commandArgs)
+            local username = commandArgs["username"]
+            local targetPid = commands.getPlayerPID(username)
 
-commands.runConsole = function(player, commandArgs, discordReplyChannel)
-    targetPid = commands.getPlayerPID(player)
-    if targetPid ~= nil then
-        logicHandler.RunConsoleCommandOnPlayer(targetPid, commandArgs)
-        commands.Sendresponse(discordReplyChannel)
-    end
-end
+            if targetPid ~= nil then
+                tes3mp.SendMessage(targetPid, color.Red .. "[SYSTEM] " .. "You have been kicked by an Administrator.", false)
+                tes3mp.Kick(targetPid)
+                commands.sendDiscordSlashResponse(username.." has been kicked", commandArgs)
+            else
+                commands.sendDiscordSlashResponse(username.." does not exist", commandArgs)
+            end
+        end,
+        args = {
+            {name = "username", description = "The name of the player to kick.", required = true}
+        }
+    },
+    ["runconsole"] = {
+        description = "Run a console command on a specific Player.",
+        handler = function(commandArgs)
+            local username = commandArgs["username"]
+            local consoleCommand = commandArgs["command"]
 
-commands.resetKills = function(discordReplyChannel)
-    for refId, killCount in pairs(WorldInstance.data.kills) do
-        WorldInstance.data.kills[refId] = 0
-    end
-    WorldInstance:QuicksaveToDrive()
-    if tableHelper.getCount(Players) > 0 then
-        for pid, player in pairs(Players) do
-            WorldInstance:LoadKills(pid, true)
-            tes3mp.SendMessage(pid, "All the kill counts for creatures and NPCs have been reset.\n", false)
+            local targetPid = commands.getPlayerPID(username)
+            if targetPid ~= nil then
+                logicHandler.RunConsoleCommandOnPlayer(targetPid, consoleCommand)
+                commands.sendDiscordSlashResponse("Console command has been sent to the user", commandArgs)
+            else
+                commands.sendDiscordSlashResponse("Player does not exist", commandArgs)
+            end
+        end,
+        args = {
+            {name = "username", description = "The name of the player.", required = true},
+            {name = "command", description = "The console command to run.", required = true}
+        }
+    },
+    ["resetkills"] = {
+        description = "Reset player kills.",
+        handler = function(commandArgs)
+            for refId, killCount in pairs(WorldInstance.data.kills) do
+                WorldInstance.data.kills[refId] = 0
+            end
+            WorldInstance:QuicksaveToDrive()
+            if tableHelper.getCount(Players) > 0 then
+                for pid, player in pairs(Players) do
+                    WorldInstance:LoadKills(pid, true)
+                    tes3mp.SendMessage(pid, "All the kill counts for creatures and NPCs have been reset.\n", false)
+                end
+            end
+            tes3mp.LogMessage(enumerations.log.INFO, "All the kill counts for creatures and NPCs have been reset.")
+            commands.sendDiscordSlashResponse("All the kill counts for creatures and NPCs have been reset", commandArgs)
         end
-    end
-    tes3mp.LogMessage(enumerations.log.INFO, "All the kill counts for creatures and NPCs have been reset.")
-    commands.Sendresponse(discordReplyChannel)
-end
-commands.processCommand = function(player, command, commandArgs, discordReplyChannel)
-    if player ~= nil then
-        if string.byte(player:sub(1,1)) == 34 then
-            pLength = string.len(player)
-            player = player:sub(2, pLength - 1)
+    },
+    ["players"] = {
+        description = "List Players",
+        handler = function(commandArgs)
+            if goTES3MPModules["getPlayers"] ~= nil then
+                local playerList = goTES3MPModules.getPlayers.getPlayers()
+                commands.sendDiscordSlashResponse(playerList, commandArgs)
+            else
+                commands.sendDiscordSlashResponse("Module not found or loaded", commandArgs)
+            end
         end
-        if commandArgs ~= nil then
-            tes3mp.LogMessage(
-                enumerations.log.INFO,
-                "[Discord]: " ..
-                    "Running " ..
-                        command .. ' on player "' .. player .. '"' .. ' with Arguements "' .. commandArgs .. '"'
-            )
-        else
-            tes3mp.LogMessage(
-                enumerations.log.INFO,
-                "[Discord]: " .. "Running " .. command .. ' on player "' .. player .. '"'
-            )
-        end
+    },
+    ["getjournal"] = {
+        description = "get a player's Journal Entry",
+        handler = function(commandArgs)
+            local username = commandArgs["username"]
+            local questid = commandArgs["questid"]
+            if goTES3MPModules["getJournal"] ~= nil then
+                local questList = goTES3MPModules.getJournal.GetJournalEntries(username, questid)
+                commands.sendDiscordSlashResponse(questList, commandArgs)
+            else
+                commands.sendDiscordSlashResponse("Module not found or loaded", commandArgs)
+            end
+        end,
+        args = {
+            {name = "username", description = "The name of the player.", required = true},
+            {name = "questid", description = "the id of the quest", required = true}
+        }
+    },
+}
+
+--- Process the command and call the appropriate handler.
+---@param command string
+---@param commandArgs string[]
+---@param discordReplyChannel string
+commands.processCommand = function(command, commandArgs, discordReplyChannel)
+    local command = string.lower(command)
+    local commandHandlerData = commandHandlers[command]
+
+    if commandHandlerData then
+        local handler = commandHandlerData.handler
+        handler(commandArgs)
     else
-        tes3mp.LogMessage(enumerations.log.INFO, "[Discord]: " .. "Running " .. command)
-    end
-
-    if command == "kickplayer" then
-        commands.kickPlayer(player, discordReplyChannel)
-    end
-    if command == "players" then
-        goTES3MPgetPlayers.getPlayers(discordReplyChannel)
-    end
-    if command == "runconsole" then
-        commands.runConsole(player, commandArgs, discordReplyChannel)
-    end
-    if command == "resetkills" then
-        commands.resetKills(discordReplyChannel)
-    end
-    if command == "getJournal" then
-        goTES3MPgetJournal.GetJournalEntrys(player, commandArgs, discordReplyChannel)
-    end
-    if command == "help" then
-        local commandList = ""
-        commandList = commandList .. "```" .. "\n"
-        commandList =
-            commandList .. "!kickplayer (Player): Kicks the specified player from the tes3mp server." .. "\n"
-        commandList =
-            commandList ..
-            "!runconsole (Player) (Command): Run a console command on a specific Player." .. "\n"
-        commandList = commandList .. "!resetkills: Reset player kills." .. "\n"
-        commandList = commandList .. "!players: List Players" .. "\n"
-        commandList = commandList .. "!getJournal (Player) (QuestID): Get a players Journal Entry" .. "\n"
-        commandList = commandList .. "```" .. "\n"
-
-        goTES3MPUtils.sendDiscordMessage(
-            goTES3MP.GetServerID(),
-            discordReplyChannel,
-            goTES3MP.GetDefaultDiscordServer(),
-            commandList
-        )
+        tes3mp.LogMessage(enumerations.log.WARN, "[Discord]: Unrecognized command: " .. command)
     end
 end
 
-commands.Sendresponse = function(discordReplyChannel)
-    goTES3MPUtils.sendDiscordMessage(
-        goTES3MP.GetServerID(),
-        discordReplyChannel,
-        goTES3MP.GetDefaultDiscordServer(),
-        "**Command Executed**"
-    )
+--- Send a response to the Discord channel.
+---@param discordReplyChannel string
+commands.sendDiscordSlashResponse = function(responseText, commandArgs)
+    local messageJson = {
+        job_id = goTES3MPModules.utils.generate_uuid(),
+        server_id = goTES3MP.GetServerID(),
+        method = "DiscordSlashCommandResponse",
+        source = "TES3MP",
+        data = commandArgs
+    }
+    messageJson["data"]["response"] = responseText  -- Assuming `response` is the response text
+
+    local encodedMessage = goTES3MPModules.utils.isJsonValidEncode(messageJson)
+    if encodedMessage ~= nil then
+        IrcBridge.SendSystemMessage(encodedMessage)
+    end
 end
 
--- Running this before a player connects, will cause a tes3mp crash
--- tes3mp.GetLastPlayerId() crashes if a player hasnt connected since server start.
+
 commands.getPlayerPID = function(str)
+    if tableHelper.getCount(Players) == 0 then
+        return nil
+    end
+
     local lastPid = tes3mp.GetLastPlayerId()
     if str ~= nil then
         for playerIndex = 0, lastPid do
@@ -122,5 +142,62 @@ commands.getPlayerPID = function(str)
     end
     return nil
 end
+
+commands.pushSlashCommands = function(pid, cmd)
+    local commandData = tableHelper.shallowCopy(commandHandlers[cmd[2]])
+    
+    -- Remove the "handler" field if present
+    commandData.handler = nil
+    -- Include the "command" field for each command
+    commandData.command = cmd[2]
+    
+    local messageJson = {
+        job_id = goTES3MPModules.utils.generate_uuid(),
+        method = "RegisterDiscordSlashCommand",
+        source = "TES3MP",
+        server_id = goTES3MP.GetServerID(),
+        data = commandData
+    }
+
+    local response = goTES3MPModules.utils.isJsonValidEncode(messageJson)
+    if response ~= nil then
+        IrcBridge.SendSystemMessage(response)
+    end
+end
+
+commands.pushAllSlashCommands = function(pid, cmd)
+    for cmdName, _ in pairs(commandHandlers) do
+        local commandData = tableHelper.shallowCopy(commandHandlers[cmdName])
+
+        -- Remove the "handler" field if present
+        commandData.handler = nil
+        -- Include the "command" field for each command
+        commandData.command = cmdName
+
+        local messageJson = {
+            job_id = goTES3MPModules.utils.generate_uuid(),
+            method = "RegisterDiscordSlashCommand",
+            source = "TES3MP",
+            server_id = goTES3MP.GetServerID(),
+            data = commandData
+        }
+
+        local response = goTES3MPModules.utils.isJsonValidEncode(messageJson)
+        if response ~= nil then
+            IrcBridge.SendSystemMessage(response)
+        end
+    end
+end
+
+customCommandHooks.registerCommand("pushSlashCommand", function(pid, cmd) 
+    commands.pushSlashCommands(pid, cmd)
+end)
+customCommandHooks.setRankRequirement("pushSlashCommand", 3)
+
+customCommandHooks.registerCommand("pushAllSlashCommands", function(pid, cmd) 
+    commands.pushAllSlashCommands(pid, cmd)
+end)
+customCommandHooks.setRankRequirement("pushAllSlashCommands", 3)
+
 
 return commands
