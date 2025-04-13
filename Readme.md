@@ -36,8 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/HotaruBlaze/goTES3MP/main/autoinsta
 2. Extract and copy the custom and lib folders to `server` folder.
 3. Add the following to your server/customScripts.lua file.
 ```
-IrcBridge = require("custom/IrcBridge/IrcBridge")
-goTES3MP = require("custom/goTES3MP/main")
+require("custom.goTES3MP_Loader")
 ```
 4. Download and place the correct `goTES3MP` binary for your platform
 5. Run the binary to generate the default configuration file(`config.yaml`)
