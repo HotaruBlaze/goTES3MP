@@ -54,7 +54,10 @@ type ipqualityscoreresponseStruct struct {
 func checkPlayerIP(ipAddress string) bool {
 	var wasIPBlocked bool
 
+	log.Debugf("[vpnChecker] Starting IP check for: %s", ipAddress)
+
 	if slices.Contains(ipAddressArray, ipAddress) {
+		log.Infof("[vpnChecker] IP %s is in blocked list, denying access", ipAddress)
 		return true
 	}
 
@@ -66,22 +69,34 @@ func checkPlayerIP(ipAddress string) bool {
 
 	// IPHub API Check
 	if len(viper.GetString("vpn.iphub_apikey")) > 0 {
+		log.Debugf("[vpnChecker] Checking IP %s with IPHub API", ipAddress)
 		wasIPBlocked = ipHubRequest(ipAddress)
 		if wasIPBlocked {
+			log.Infof("[vpnChecker] IP %s blocked by IPHub API", ipAddress)
 			return true
 		}
+		log.Debugf("[vpnChecker] IP %s not blocked by IPHub API", ipAddress)
 	}
 
 	// IPQualityScore API Check
 	if len(viper.GetString("vpn.ipqualityscore_apikey")) > 0 {
+		log.Debugf("[vpnChecker] Checking IP %s with IPQualityScore API", ipAddress)
 		wasIPBlocked = ipqualityscoreRequest(ipAddress)
+		if wasIPBlocked {
+			log.Infof("[vpnChecker] IP %s blocked by IPQualityScore API", ipAddress)
+		} else {
+			log.Debugf("[vpnChecker] IP %s not blocked by IPQualityScore API", ipAddress)
+		}
 	}
 
+	log.Debugf("[vpnChecker] Final result for IP %s: blocked=%v", ipAddress, wasIPBlocked)
 	return wasIPBlocked
 }
 
 func ipHubRequest(ipAddress string) bool {
 	url := fmt.Sprintf("http://v2.api.iphub.info/ip/%s", ipAddress)
+	log.Debugf("[vpnChecker] IPHub request URL: %s", url)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		checkError("ipHubRequest:1", err)
@@ -94,10 +109,14 @@ func ipHubRequest(ipAddress string) bool {
 	}
 	defer resp.Body.Close()
 
+	log.Debugf("[vpnChecker] IPHub response status: %s", resp.Status)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		checkError("ipHubRequest:3", err)
 	}
+
+	log.Debugf("[vpnChecker] IPHub response body: %s", string(body))
 
 	var IPResponse IPHubResponseStruct
 	err = json.Unmarshal(body, &IPResponse)
@@ -105,16 +124,23 @@ func ipHubRequest(ipAddress string) bool {
 		checkError("ipHubRequest:4", err)
 	}
 
+	log.Debugf("[vpnChecker] IPHub parsed response - Block: %d, Country: %s, ISP: %s",
+		IPResponse.Block, IPResponse.CountryName, IPResponse.Isp)
+
 	if IPResponse.Block == 1 {
+		log.Infof("[vpnChecker] IP %s blocked by IPHub (Block=1)", ipAddress)
 		ipAddressArray = appendIfMissing(ipAddressArray, ipAddress)
 		return true
 	}
+
+	log.Debugf("[vpnChecker] IP %s not blocked by IPHub (Block!=1)", ipAddress)
 	return false
 }
 
 func ipqualityscoreRequest(ipAddress string) bool {
 	apiKey := viper.GetString("vpn.ipqualityscore_apikey")
 	webReq := fmt.Sprintf("https://ipqualityscore.com/api/json/ip/%s/%s", apiKey, ipAddress)
+	log.Debugf("[vpnChecker] IPQualityScore request URL: %s", webReq)
 
 	req, err := http.NewRequest("GET", webReq, nil)
 	if err != nil {
@@ -129,11 +155,15 @@ func ipqualityscoreRequest(ipAddress string) bool {
 	}
 	defer resp.Body.Close()
 
+	log.Debugf("[vpnChecker] IPQualityScore response status: %s", resp.Status)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		checkError("ipqualityscoreRequest:3", err)
 		return false
 	}
+
+	log.Debugf("[vpnChecker] IPQualityScore response body: %s", string(body))
 
 	var ipqs ipqualityscoreresponseStruct
 	err = json.Unmarshal(body, &ipqs)
@@ -142,13 +172,23 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		return false
 	}
 
+	log.Debugf("[vpnChecker] IPQualityScore parsed response - VPN: %v, Tor: %v, Proxy: %v, FraudScore: %d, Country: %s",
+		ipqs.VPN, ipqs.Tor, ipqs.Proxy, ipqs.FraudScore, ipqs.CountryCode)
+
 	// ---- Decision logic ----
-	if ipqs.VPN || ipqs.Tor {
+	if ipqs.VPN {
+		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (VPN=true)", ipAddress)
+		return true
+	}
+
+	if ipqs.Tor {
+		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (Tor=true)", ipAddress)
 		return true
 	}
 
 	// Proxy + very high fraud score
 	if ipqs.Proxy && ipqs.FraudScore >= 95 {
+		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (Proxy=true, FraudScore=%d)", ipAddress, ipqs.FraudScore)
 		return true
 	}
 
@@ -158,5 +198,6 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		return false
 	}
 
+	log.Debugf("[vpnChecker] IP %s not blocked by IPQualityScore", ipAddress)
 	return false
 }
