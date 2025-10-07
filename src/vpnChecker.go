@@ -172,10 +172,11 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		return false
 	}
 
-	log.Debugf("[vpnChecker] IPQualityScore parsed response - VPN: %v, Tor: %v, Proxy: %v, FraudScore: %d, Country: %s",
-		ipqs.VPN, ipqs.Tor, ipqs.Proxy, ipqs.FraudScore, ipqs.CountryCode)
+	log.Debugf("[vpnChecker] IPQualityScore parsed response - VPN: %v, Tor: %v, Proxy: %v, FraudScore: %d, Country: %s, ISP: %s",
+		ipqs.VPN, ipqs.Tor, ipqs.Proxy, ipqs.FraudScore, ipqs.CountryCode, ipqs.ISP)
 
 	// ---- Decision logic ----
+	// Block only confirmed VPN or Tor connections
 	if ipqs.VPN {
 		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (VPN=true)", ipAddress)
 		return true
@@ -186,15 +187,21 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		return true
 	}
 
-	// Proxy + very high fraud score
-	if ipqs.Proxy && ipqs.FraudScore >= 95 {
-		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (Proxy=true, FraudScore=%d)", ipAddress, ipqs.FraudScore)
+	// Allow if it's only a proxy but not a VPN (to avoid false positives with CGNAT/mobile broadband)
+	if ipqs.Proxy && !ipqs.VPN {
+		log.Infof("[vpnChecker] IP %s detected as proxy but not VPN, allowing access (Proxy=true, VPN=false, FraudScore=%d)", ipAddress, ipqs.FraudScore)
+		return false
+	}
+
+	// Block for very high fraud scores (99-100) regardless of proxy status
+	if ipqs.FraudScore >= 99 {
+		log.Infof("[vpnChecker] IP %s blocked by IPQualityScore (extremely high FraudScore=%d)", ipAddress, ipqs.FraudScore)
 		return true
 	}
 
-	// Medium risk -> warn only
-	if ipqs.Proxy && ipqs.FraudScore >= 85 {
-		log.Warnf("[VpnChecker] Suspicious IP (proxy=true, fraud=%d): %s", ipqs.FraudScore, ipAddress)
+	// Warn for high fraud scores but allow access
+	if ipqs.FraudScore >= 90 {
+		log.Warnf("[VpnChecker] High fraud score but allowing access (fraud=%d, ISP=%s): %s", ipqs.FraudScore, ipqs.ISP, ipAddress)
 		return false
 	}
 
