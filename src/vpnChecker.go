@@ -37,7 +37,7 @@ type ipqualityscoreresponseStruct struct {
 	Mobile         bool    `json:"mobile"`
 	Host           string  `json:"host"`
 	Proxy          bool    `json:"proxy"`
-	Vpn            bool    `json:"vpn"`
+	VPN            bool    `json:"vpn"`
 	Tor            bool    `json:"tor"`
 	ActiveVpn      bool    `json:"active_vpn"`
 	ActiveTor      bool    `json:"active_tor"`
@@ -135,16 +135,27 @@ func ipqualityscoreRequest(ipAddress string) bool {
 		return false
 	}
 
-	var IPresponse ipqualityscoreresponseStruct
-	err = json.Unmarshal(body, &IPresponse)
+	var ipqs ipqualityscoreresponseStruct
+	err = json.Unmarshal(body, &ipqs)
 	if err != nil {
 		checkError("ipqualityscoreRequest:4", err)
 		return false
 	}
 
-	if IPresponse.FraudScore >= 80 {
-		ipAddressArray = appendIfMissing(ipAddressArray, ipAddress)
+	// ---- Decision logic ----
+	if ipqs.VPN || ipqs.Tor {
 		return true
+	}
+
+	// Proxy + very high fraud score
+	if ipqs.Proxy && ipqs.FraudScore >= 95 {
+		return true
+	}
+
+	// Medium risk -> warn only
+	if ipqs.Proxy && ipqs.FraudScore >= 85 {
+		log.Warnf("[VpnChecker] Suspicious IP (proxy=true, fraud=%d): %s", ipqs.FraudScore, ipAddress)
+		return false
 	}
 
 	return false
