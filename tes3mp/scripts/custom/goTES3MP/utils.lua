@@ -71,6 +71,35 @@ goTES3MPUtils.sendDiscordMessage = function(ServerID, channel, server, message)
     end
 end
 
+--- Sends an embed to Discord.
+---@param ServerID string The ID of the server.
+---@param channel string The channel to send the embed to.
+---@param server string The target Discord server ID.
+---@param embed table Table containing embed data. Should have fields: title, content, color, fields (array of {name, value, inline}), footer_text, footer_icon, timestamp.
+goTES3MPUtils.sendDiscordEmbed = function(ServerID, channel, server, embed)
+    -- Build the embed JSON payload
+    local embedJson = {
+        job_id = goTES3MPUtils.generate_uuid(),
+        method = "rawDiscordEmbed",
+        source = "TES3MP",
+        server_id = ServerID,
+        data = {
+            channel = channel,
+            server = server,
+            message = goTES3MPUtils.isJsonValidEncode(embed) -- encode the embed table to JSON
+        }
+    }
+
+    -- Encode the full BaseResponse packet
+    local response = goTES3MPUtils.isJsonValidEncode(embedJson)
+    if response ~= nil then
+        IrcBridge.SendSystemMessage(response)
+    else
+        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MPUtils:sendDiscordEmbed] failed to send embed to discord.")
+    end
+end
+
+
 -- Sorts a table in an alphanumeric order.
 ---@param o table The table to sort.
 ---@return table The sorted table.

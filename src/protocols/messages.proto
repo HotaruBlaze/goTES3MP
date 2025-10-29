@@ -61,3 +61,22 @@ message Metadata {
     string job_id = 4;
     map<string, string> additional_data = 5;
 }
+
+// Represents a Discord embed field.
+message EmbedField {
+  string name = 1;
+  string value = 2;
+  bool inline = 3;
+}
+
+// Represents a full Discord embed payload.
+message EmbedPayload {
+  string channel_id = 1;   // Target Discord channel ID
+  string content = 2;      // Optional message text before embed
+  string title = 3;        // Embed title
+  uint32 color = 4;        // Color (0xRRGGBB)
+  repeated EmbedField fields = 5; // Embed fields
+  string footer_text = 6;  // Footer text
+  string footer_icon = 7;  // Footer icon URL
+  bool timestamp = 8;      // Whether to include a timestamp
+}

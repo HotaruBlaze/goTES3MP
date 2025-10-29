@@ -155,6 +155,23 @@ func processRelayMessage(s *protocols.BaseResponse) bool {
 		discordInteractiveToken := res.Data["discordInteractiveToken"]
 		discordInteractiveReply := res.Data["response"]
 		SendDiscordInteractiveMessage(discordInteractiveToken, discordInteractiveReply)
+	case "rawDiscordEmbed":
+		var payload protocols.EmbedPayload
+		err := json.Unmarshal([]byte(res.Data["message"]), &payload)
+		if err != nil {
+			log.Errorf("[ProcessRelayMessage][rawDiscordEmbed] Failed to parse embed JSON: %v", err)
+			return false
+		}
+
+		status := sendJSONEmbed([]byte(res.Data["message"]))
+		if status != nil {
+			log.Errorf("[ProcessRelayMessage][rawDiscordEmbed] sendJSONEmbed failed: %v", status)
+			return false
+		}
+
+		logRelayedMessages("TES3MP", fmt.Sprintf("[Embed] %s", payload.Title))
+		return true
+
 	default:
 		log.Println(res.Method, " is an unknown method.")
 	}

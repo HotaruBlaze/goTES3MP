@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"os"
 	"strconv"
@@ -133,6 +134,50 @@ func handleDiscordCommands(s *discordgo.Session, i *discordgo.InteractionCreate)
 			})
 		}
 	}
+}
+
+func sendJSONEmbed(jsonData []byte) error {
+	var payload protocols.EmbedPayload
+	if err := json.Unmarshal(jsonData, &payload); err != nil {
+		log.Errorf("invalid JSON: %v", err)
+		return err
+	}
+
+	if payload.ChannelId == "" {
+		log.Errorln("missing channel_id in JSON")
+		return errors.New("missing channel_id in JSON")
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:  payload.Title,
+		Color:  int(payload.Color),
+		Fields: []*discordgo.MessageEmbedField{},
+	}
+
+	for _, field := range payload.Fields {
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:   field.Name,
+			Value:  field.Value,
+			Inline: field.Inline,
+		})
+	}
+
+	if payload.FooterText != "" {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text:    payload.FooterText,
+			IconURL: payload.FooterIcon,
+		}
+	}
+
+	if payload.Timestamp {
+		embed.Timestamp = time.Now().Format(time.RFC3339)
+	}
+
+	_, err := DiscordSession.ChannelMessageSendComplex(payload.ChannelId, &discordgo.MessageSend{
+		Content: payload.Content,
+		Embeds:  []*discordgo.MessageEmbed{embed},
+	})
+	return err
 }
 
 // discordOptionsToJSON converts Discord options to JSON format.
