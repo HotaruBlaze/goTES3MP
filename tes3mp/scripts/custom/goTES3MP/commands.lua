@@ -29,12 +29,19 @@ end
 ---@param command string
 ---@param commandArgs string[]
 ---@param discordReplyChannel string
-goTES3MP_Command.processCommand = function(command, commandArgs, discordReplyChannel)
+---@param discordUserID string (optional)
+goTES3MP_Command.processCommand = function(command, commandArgs, discordReplyChannel, discordUserID)
     local command = string.lower(command)
     local commandHandlerData = commandHandlers[command]
 
     if commandHandlerData then
         local handler = commandHandlerData.handler
+        
+        -- Add discordUserID to commandArgs if provided
+        if discordUserID then
+            commandArgs["discordUserID"] = discordUserID
+        end
+        
         handler(commandArgs)
     else
         tes3mp.LogMessage(enumerations.log.WARN, "[Discord]: Unrecognized command: " .. command)

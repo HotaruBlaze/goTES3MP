@@ -654,6 +654,7 @@ type EmbedPayload struct {
 	FooterText    string                 `protobuf:"bytes,6,opt,name=footer_text,json=footerText,proto3" json:"footer_text,omitempty"` // Footer text
 	FooterIcon    string                 `protobuf:"bytes,7,opt,name=footer_icon,json=footerIcon,proto3" json:"footer_icon,omitempty"` // Footer icon URL
 	Timestamp     bool                   `protobuf:"varint,8,opt,name=timestamp,proto3" json:"timestamp,omitempty"`                    // Whether to include a timestamp
+	IsDm          bool                   `protobuf:"varint,9,opt,name=is_dm,json=isDm,proto3" json:"is_dm,omitempty"`                  // Whether this should be sent as a DM (true) or to a channel (false)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -744,6 +745,13 @@ func (x *EmbedPayload) GetTimestamp() bool {
 	return false
 }
 
+func (x *EmbedPayload) GetIsDm() bool {
+	if x != nil {
+		return x.IsDm
+	}
+	return false
+}
+
 var File_protocols_messages_proto protoreflect.FileDescriptor
 
 const file_protocols_messages_proto_rawDesc = "" +
@@ -803,7 +811,7 @@ const file_protocols_messages_proto_rawDesc = "" +
 	"EmbedField\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12\x16\n" +
-	"\x06inline\x18\x03 \x01(\bR\x06inline\"\xfd\x01\n" +
+	"\x06inline\x18\x03 \x01(\bR\x06inline\"\x92\x02\n" +
 	"\fEmbedPayload\x12\x1d\n" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\x12\x18\n" +
@@ -815,7 +823,8 @@ const file_protocols_messages_proto_rawDesc = "" +
 	"footerText\x12\x1f\n" +
 	"\vfooter_icon\x18\a \x01(\tR\n" +
 	"footerIcon\x12\x1c\n" +
-	"\ttimestamp\x18\b \x01(\bR\ttimestampB!Z\x1fgithub.com/hotarublaze/gotes3mpb\x06proto3"
+	"\ttimestamp\x18\b \x01(\bR\ttimestamp\x12\x13\n" +
+	"\x05is_dm\x18\t \x01(\bR\x04isDmB!Z\x1fgithub.com/hotarublaze/gotes3mpb\x06proto3"
 
 var (
 	file_protocols_messages_proto_rawDescOnce sync.Once

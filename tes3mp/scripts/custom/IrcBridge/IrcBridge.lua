@@ -71,8 +71,9 @@ IrcBridge.RecvMessage = function()
                             local commandArgs = goTES3MPModules.utils.isJsonValidDecode(response.data.commandArgs)
                             tes3mp.LogMessage(enumerations.log.INFO, "[GoTES3MP:Command] Executing command \"" .. command .. "\" with args {" .. tableHelper.getSimplePrintableTable(commandArgs).."}")
                             commandArgs["discordInteractiveToken"] = response.data["discordInteractiveToken"]
-
-                            goTES3MPModules.commands.processCommand(command, commandArgs)
+                            
+                            local discordUserID = response.data["discordUserID"]
+                            goTES3MPModules.commands.processCommand(command, commandArgs, nil, discordUserID)
                         end,
                         ["DiscordChat"] = function()
                             IrcBridge.chatMessage(response)

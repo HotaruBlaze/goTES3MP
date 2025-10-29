@@ -110,6 +110,7 @@ func handleDiscordCommands(s *discordgo.Session, i *discordgo.InteractionCreate)
 					"command":                 commandName,
 					"commandArgs":             commandArgs,
 					"discordInteractiveToken": string(i.Interaction.Token),
+					"discordUserID":           i.Member.User.ID,
 				},
 			}
 			jsonresponse, err := json.Marshal(discordCommand)
@@ -173,11 +174,28 @@ func sendJSONEmbed(jsonData []byte) error {
 		embed.Timestamp = time.Now().Format(time.RFC3339)
 	}
 
-	_, err := DiscordSession.ChannelMessageSendComplex(payload.ChannelId, &discordgo.MessageSend{
-		Content: payload.Content,
-		Embeds:  []*discordgo.MessageEmbed{embed},
-	})
-	return err
+	// Check if this should be sent as a DM
+	if payload.IsDm {
+		// Create DM channel with the user
+		dmChannel, err := DiscordSession.UserChannelCreate(payload.ChannelId)
+		if err != nil {
+			log.Errorf("failed to create DM channel with user %s: %v", payload.ChannelId, err)
+			return err
+		}
+
+		_, err = DiscordSession.ChannelMessageSendComplex(dmChannel.ID, &discordgo.MessageSend{
+			Content: payload.Content,
+			Embeds:  []*discordgo.MessageEmbed{embed},
+		})
+		return err
+	} else {
+		// Send to regular channel
+		_, err := DiscordSession.ChannelMessageSendComplex(payload.ChannelId, &discordgo.MessageSend{
+			Content: payload.Content,
+			Embeds:  []*discordgo.MessageEmbed{embed},
+		})
+		return err
+	}
 }
 
 // discordOptionsToJSON converts Discord options to JSON format.

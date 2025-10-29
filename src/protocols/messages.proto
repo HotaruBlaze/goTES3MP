@@ -79,4 +79,5 @@ message EmbedPayload {
   string footer_text = 6;  // Footer text
   string footer_icon = 7;  // Footer icon URL
   bool timestamp = 8;      // Whether to include a timestamp
+  bool is_dm = 9;          // Whether this should be sent as a DM (true) or to a channel (false)
 }

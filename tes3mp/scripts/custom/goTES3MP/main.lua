@@ -148,6 +148,7 @@ customEventHooks.registerValidator(
         goTES3MPConfig.LoadConfig()
         goTES3MPModules = goTES3MP.LoadModules()
         goTES3MP.GetServerID()
+        
         tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP]: Loaded")
     end
 )
@@ -171,10 +172,113 @@ customEventHooks.registerHandler("OnServerExit", function(eventStatus, pid)
         config.goTES3MP.defaultDiscordServer,
         "**".."[TES3MP] Server is offline. :warning:".."**"
     )
+    
 end)
 
-customCommandHooks.registerCommand("forceSync", function(pid) 
+customCommandHooks.registerCommand("forceSync", function(pid)
     goTES3MPModules.sync.sendSync(true)
 end)
+
+-- Discord linking command for in-game use
+customCommandHooks.registerCommand("linkdiscord", function(pid, cmd)
+    
+    -- Get the linking code from command arguments
+    local linkingCode = cmd[2]
+    
+    if not linkingCode then
+        tes3mp.SendMessage(pid, "Usage: /linkdiscord <code>\nGet a code from Discord using the /linkdiscord command.\n", false)
+        return
+    end
+    
+    -- Validate the code
+    local isValid, result = goTES3MPModules["discordLinking"].isCodeValid(linkingCode)
+    
+    if not isValid then
+        tes3mp.SendMessage(pid, "Invalid or expired code: " .. result .. "\n", false)
+        return
+    end
+    
+    local discordID = result
+    local playerName = Players[pid].data.login.name
+    
+    -- Attempt to link the account
+    local success, message = goTES3MPModules["discordLinking"].linkAccount(discordID, playerName)
+    
+    if success then
+        tes3mp.SendMessage(pid, "Success! Your account has been linked to Discord.\n", false)
+        
+        -- Remove the used code
+        goTES3MPModules["discordLinking"].removePendingCode(linkingCode)
+        
+        -- Send confirmation to Discord (if possible)
+        local confirmMessage = "Player " .. playerName .. " has successfully linked their account."
+        -- This would need to be sent via the Discord system
+    else
+        tes3mp.SendMessage(pid, "Failed to link account: " .. message .. "\n", false)
+    end
+end)
+
+-- Command to toggle Discord notifications
+customCommandHooks.registerCommand("togglenotifications", function(pid, cmd)
+    local playerName = Players[pid].data.login.name
+    
+    -- Check if the player has a linked Discord account
+    local discordID = goTES3MPModules["discordLinking"].getDiscordID(playerName)
+    if not discordID then
+        tes3mp.SendMessage(pid, "You must link your Discord account first using /linkdiscord <code>\n", false)
+        return
+    end
+    
+    -- Get the notification type from command arguments (default to "sales")
+    local notificationType = cmd[2] or "sales"
+    
+    -- Get current settings
+    local settings = goTES3MPModules["discordLinking"].getNotificationSettings(discordID)
+    local currentStatus = settings[notificationType]
+    
+    -- Toggle the setting
+    local newStatus = not currentStatus
+    goTES3MPModules["discordLinking"].setNotificationPreference(discordID, notificationType, newStatus)
+    
+    -- Send confirmation message
+    local statusText = newStatus and "enabled" or "disabled"
+    tes3mp.SendMessage(pid, notificationType .. " notifications have been " .. statusText .. ".\n", false)
+end)
+
+-- Function to send sale notification to a player
+goTES3MP.sendSaleNotification = function(playerName, itemName, price, quantity)
+    if goTES3MPModules == nil then
+        goTES3MPModules = goTES3MP.LoadModules()
+    end
+    
+    if goTES3MPModules["discordLinking"] == nil then
+        tes3mp.LogMessage(enumerations.log.WARN, "[goTES3MP] Discord linking module not loaded")
+        return false
+    end
+    
+    -- Create the fields for the embed
+    local fields = {
+        {name = "Item", value = itemName, inline = true},
+        {name = "Price", value = tostring(price) .. " gold", inline = true},
+        {name = "Quantity", value = tostring(quantity), inline = true}
+    }
+    
+    -- Send the notification
+    local success = goTES3MPModules["discordLinking"].sendNotification(
+        playerName,
+        "sales",
+        "💰 Item Sold!",
+        "Your item has been sold successfully.",
+        fields
+    )
+    
+    if success then
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP] Sale notification sent to " .. playerName)
+    else
+        tes3mp.LogMessage(enumerations.log.INFO, "[goTES3MP] Sale notification not sent to " .. playerName .. " (notifications disabled or not linked)")
+    end
+    
+    return success
+end
 
 return goTES3MP

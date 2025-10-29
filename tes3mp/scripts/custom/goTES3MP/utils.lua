@@ -76,7 +76,14 @@ end
 ---@param channel string The channel to send the embed to.
 ---@param server string The target Discord server ID.
 ---@param embed table Table containing embed data. Should have fields: title, content, color, fields (array of {name, value, inline}), footer_text, footer_icon, timestamp.
-goTES3MPUtils.sendDiscordEmbed = function(ServerID, channel, server, embed)
+---@param isDm boolean Whether this should be sent as a DM (true) or to a channel (false). Default is false.
+goTES3MPUtils.sendDiscordEmbed = function(ServerID, channel, server, embed, isDm)
+    -- Set default value for isDm if not provided
+    isDm = isDm or false
+    
+    -- Add the is_dm flag to the embed data
+    embed.is_dm = isDm
+    
     -- Build the embed JSON payload
     local embedJson = {
         job_id = goTES3MPUtils.generate_uuid(),
