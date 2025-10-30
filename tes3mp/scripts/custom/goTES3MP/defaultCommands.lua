@@ -1,3 +1,4 @@
+local goTES3MPUtils = require("custom.goTES3MP.utils")
 
 -- Define the addKickPlayerCommand function
 goTES3MP_Command.addCommandHandler(
@@ -48,22 +49,48 @@ goTES3MP_Command.addCommandHandler(
             return
         end
         
-        -- Check if this Discord account has any linked accounts
-        local linkedNames = goTES3MPModules["discordLinking"].getPlayerNames(discordUserID)
-        if linkedNames and #linkedNames > 0 then
-            local message = "Your Discord account is already linked to " .. #linkedNames .. " player account(s).\n\n" ..
-                           "You can still link additional accounts by using the code provided below."
-        end
-        
+        -- Generate linking code
         local linkingCode = goTES3MPModules["discordLinking"].generateCode()
-        
         goTES3MPModules["discordLinking"].storePendingCode(linkingCode, discordUserID)
         
-        local message = "Your linking code is: **" .. linkingCode .. "**\n\n" ..
-                       "Use this code in-game with the command `/linkdiscord " .. linkingCode .. "`\n" ..
-                       "This code will expire in 5 minutes."
+        -- Check if this Discord account has any linked accounts
+        local linkedNames = goTES3MPModules["discordLinking"].getPlayerNames(discordUserID)
+        local additionalInfo = ""
+        if linkedNames and #linkedNames > 0 then
+            additionalInfo = "Your Discord account is already linked to the following player account(s):\n"
+            for _, name in ipairs(linkedNames) do
+                additionalInfo = additionalInfo .. "• " .. name .. "\n"
+            end
+            additionalInfo = additionalInfo .. "\nYou can still link additional accounts by using the code provided below.\n\n"
+        end
         
-        goTES3MP_Command.sendDiscordSlashResponse(message, commandArgs)
+        -- Send initial response telling user to check DMs
+        goTES3MP_Command.sendDiscordSlashResponse("Please check your DMs for your linking code.", commandArgs)
+        
+        -- Send the actual linking code as a DM embed
+        local ServerID = goTES3MP.GetServerID()
+        local embed = {
+            channel_id = discordUserID,
+            content = "🔗 **Account Linking**",
+            title = "Discord Account Linking Code",
+            color = 5814783, -- Blue color (0x5865F2)
+            fields = {
+                {name = "Your Linking Code", value = "**" .. linkingCode .. "**", inline = false},
+                {name = "How to Use", value = "Use this code in-game with the command:\n`/linkdiscord " .. linkingCode .. "`", inline = false},
+                {name = "Important", value = "This code will expire in 5 minutes.", inline = false}
+            },
+            footer_text = "goTES3MP",
+            footer_icon = "",
+            timestamp = true,
+        }
+        
+        -- Add additional info if user has existing linked accounts
+        if additionalInfo ~= "" then
+            table.insert(embed.fields, 1, {name = "Existing Links", value = additionalInfo, inline = false})
+        end
+        
+        -- Send the embed as a DM
+        goTES3MPUtils.sendDiscordEmbed(ServerID, discordUserID, "", embed, true)
     end,
     {}
 )
